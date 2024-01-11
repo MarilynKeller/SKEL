@@ -12,7 +12,7 @@ if __name__ == '__main__':
     
     device = 'cpu'
     
-    skel = SKEL().to(device)
+    skel = SKEL(gender='female').to(device)
 
     # Set parameters to default values (T pose)
     pose = torch.zeros(1, skel.num_q_params).to(device) # (1, 46)

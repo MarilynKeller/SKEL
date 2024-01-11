@@ -1,0 +1,4 @@
+output/
+models/
+*.egg-info
+*__pycache__/

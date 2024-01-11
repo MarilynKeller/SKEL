@@ -1,9 +1,9 @@
 from setuptools import find_packages, setup
-from aitviewer import __version__
 
 requirements = ["wheel",
-                "-e git+https://github.com/mattloper/chumpy.git#egg=chumpy",
-                "smplx"]
+                "torch>=1.6.0",
+                "smplx",
+                "trimesh>=4.0.8"]
 
 setup(
     name="skel",

@@ -8,8 +8,7 @@
 
 This repo contains the pytorch SKEL loader and the code to align it to <br> SMPL sequences.
 
-Please check our Siggraph 2023 project page and paper for more information : <br>
-[From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans](https://skel.is.tue.mpg.de/)
+Please check our Siggraph 2023 project page and paper for more information : [From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans](https://skel.is.tue.mpg.de/)
 <br>
 <br>
 <br>
@@ -17,12 +16,6 @@ Please check our Siggraph 2023 project page and paper for more information : <br
 
 
 # Installation
-
-## Downloading SKEL
-Create an account on https://skel.is.tue.mpg.de/. (Necessary for the download to work)
-
-Then download the SKEL model from the download page with the "Download Models" button.
-Extract the downloaded folder and edit the file `SKEL/config.py` to specify the folder containing the downloaded SKEL model folder : `skel_folder = '/path/to/skel_models_v1.0`
 
 ## Set up the environment
 Clone this repository
@@ -34,10 +27,19 @@ cd SKEL
 
 Create a virtual environment and install the SKEL package
 ```
+pip install -U pip   
 python3.8 -m venv skel_venv
 source skel_venv/bin/activate
+pip install git+https://github.com/mattloper/chumpy 
 pip install -e .
 ```
+
+## Downloading SKEL
+Create an account on https://skel.is.tue.mpg.de/. (Necessary for the download to work)
+
+Then download the SKEL model from the download page with the "Download Models" button.
+Extract the downloaded folder and edit the file `SKEL/skel/config.py` to specify the folder containing the downloaded SKEL model folder : `skel_folder = '/path/to/skel_models_v1.0`
+
 
 To test the SKEL model, run:
 ``` 
@@ -45,13 +47,16 @@ python quickstart.py
 ```
 This runs the forward pass of SKEL and saves the output as separated body and skeleton meshes.
 
+
 ## Aitviewer
 
 If you want to run the Demos, you will also need our aitviewer fork for visualization:
 
 ```
+cd ..
 git clone https://github.com/MarilynKeller/aitviewer-skel.git
 cd aitviewer-skel
+pip install pyqt5 --verbose   
 pip install -e .
 ```
 
