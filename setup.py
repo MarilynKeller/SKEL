@@ -3,6 +3,7 @@ from aitviewer import __version__
 
 requirements = ["wheel",
                 "-e git+https://github.com/mattloper/chumpy.git#egg=chumpy",
+                "torch>=1.6.0",
                 "smplx"]
 
 setup(
