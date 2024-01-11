@@ -55,5 +55,6 @@ if __name__ == '__main__':
     v = Viewer()
     v.playback_fps = fps
     v.scene.add(skel_seq)
-
+    
+    v.run_animations = True
     v.run()

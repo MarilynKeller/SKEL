@@ -54,4 +54,6 @@ if __name__ == "__main__":
     v.scene.add(*to_display)
     v.scene.camera.position = np.array([-5, 1.7, 0.0])
     v.lock_to_node(skel_seq, (2, 0.7, 2), smooth_sigma=5.0)
+    
+    v.run_animations = True 
     v.run()

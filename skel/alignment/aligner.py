@@ -56,8 +56,8 @@ def optim(params,
           skel_model,
           device,
           lr=1e0,
-          max_iter=25,
-          num_steps=10,
+          max_iter=5,
+          num_steps=5,
           line_search_fn='strong_wolfe',
           rot_only=False,
           watch_frame=0,
@@ -238,7 +238,6 @@ class SkelFitter(object):
                 optim([trans,poses], poses, betas, trans, verts, self.skel, self.device, rot_only=True, watch_frame=watch_frame)
                 optim([trans,poses], poses, betas, trans, verts, self.skel, self.device, watch_frame=watch_frame, **init_optim_params)
             else:
-                # optim([trans,poses], poses, betas, trans, verts, self.skel, self.device, watch_frame=watch_frame, pose_reg_factor=10, **seq_optim_params)
                 optim([trans,poses], poses, betas, trans, verts, self.skel, self.device, watch_frame=watch_frame, pose_reg_factor=1, **seq_optim_params)
             
             # Save the result

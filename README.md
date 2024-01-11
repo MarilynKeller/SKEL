@@ -1,18 +1,19 @@
 # SKEL
 
-<div style="position: relative;">
 
-<div style="position: absolute; top: 0; right: 0;">
-    <img src="assets/Ypose_highres.png" alt="Image Description" style="width: 200px; border-radius: 8px; margin: 0 0 10px 10px;" />
-</div>
 
-This repo contains the pytorch SKEL loader and the code to align it to <br> SMPL sequences.
+<img src="assets/Ypose_highres.png" alt="Image Description" style="width: 200px;" />
 
-Please check our Siggraph 2023 project page and paper for more information : [From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans](https://skel.is.tue.mpg.de/)
-<br>
-<br>
-<br>
-</div>
+SKEL is a parametric body shape and skeleton model. Its pose parameter lets you change the body shape and its pose parameter lets you pose the skeleton in an anatomical plausible way. Given shape and pose parameters, SKEL returns joint locations, a body mesh and a skeleton mesh. SKEL is differentiable and can be fit to various data like motion capture or SMPL sequences.
+
+For more information, please check our Siggraph 2023 paper: From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans.
+
+[ [paper](https://download.is.tue.mpg.de/skel/main_paper.pdf) ]  [ [project page](https://skel.is.tue.mpg.de/) ] 
+
+
+# Content
+
+This repo contains the pytorch SKEL loader and the code to align it to SMPL sequences.
 
 
 # Installation
@@ -84,7 +85,7 @@ pip install git+https://github.com/MPI-IS/mesh.git
 Visualize the effects of the pose parameters of SKEL:
 
 ```
-python examples/skel_poses.py --gender female
+python examples/skel_poses.py --gender male
 ```
 
 ![]()
@@ -93,18 +94,18 @@ python examples/skel_poses.py --gender female
 Vizualize the shape space:
 
 ```
-python examples/skel_betas.py --gender male 
+python examples/skel_betas.py --gender female 
 ```
 
-Vizualize a SKEL sequence:
+Vizualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
 
 ```
-python examples/skel_sequence.py /path/to/01_01_poses_skel.pkl -z 
+python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_poses_skel.pkl -z 
 ```
 
-Along SMPL : 
+To visualize the SMPL sequence alongside : 
 ```
-python examples/skel_sequence.py /path/to/01_01_poses_skel.pkl -z --smpl_seq /path/to/AMASS/CMU/01/01_01_poses.npz
+python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_poses_skel.pkl -z --smpl_seq /path/to/skel_models_v1.0/sample_motion/01_01_poses.npz
 ```
 
 # Alignment
@@ -122,9 +123,11 @@ If you use this software, please cite the following work and software:
 ```
 @inproceedings{keller2023skel,
   title = {From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans},
-  author = {Keller, Marilyn and Werling, Keenon and Shin, Soyong and Delp, Scott and Pujades, Sergi 
-            and C. Karen, Liu and Black, Michael J.},
+  author = {Keller, Marilyn and Werling, Keenon and Shin, Soyong and Delp, Scott and 
+            Pujades, Sergi and C. Karen, Liu and Black, Michael J.},
   booktitle = {ACM ToG, Proc.~SIGGRAPH Asia},
+  volume = {42},
+  number = {6},
   month = dec,
   year = {2023},
 }
