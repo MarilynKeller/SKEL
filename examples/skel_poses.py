@@ -22,66 +22,65 @@ if __name__ == '__main__':
 
     gender = args.gender
     fps = 15
-    todisplay = []
    
     # Instantiate the SKEL model
     skel_model = SKEL(gender)
 
     # List of the parameters to vary
     parameters_to_vary = [
-                            # # 'pelvis_rotation',
-                            # # 'pelvis_list',
-                            # # 'pelvis_tilt',
+                            # 'pelvis_rotation',
+                            # 'pelvis_list',
+                            # 'pelvis_tilt',
                             
-                            # #Back 
-                            # 'lumbar_bending',
-                            # 'lumbar_extension',
-                            # 'lumbar_twist',
+                            #Back 
+                            'lumbar_bending',
+                            'lumbar_extension',
+                            'lumbar_twist',
         
-                            # 'thorax_bending',
-                            # # 'thorax_extension',
-                            # # 'thorax_twist',
+                            'thorax_bending',
+                            # 'thorax_extension',
+                            # 'thorax_twist',
                             
-                            # # 'head_bending',
-                            # # 'head_extension',
-                            # 'head_twist',
+                            # 'head_bending',
+                            # 'head_extension',
+                            'head_twist',
                             
-                            # #Shoulder
-                            # # 'shoulder_l_x',
-                            # # 'shoulder_l_y',
-                            # # 'shoulder_l_z',
+                            #Shoulder
+                            # 'shoulder_l_x',
+                            # 'shoulder_l_y',
+                            # 'shoulder_l_z',
                             
-                            # # 'shoulder_r_x',
-                            # # 'shoulder_r_y',
-                            # # 'shoulder_r_z',
+                            # 'shoulder_r_x',
+                            # 'shoulder_r_y',
+                            # 'shoulder_r_z',
 
-                            # 'scapula_abduction_r',
-                            # 'scapula_elevation_r',
-                            # 'scapula_upward_rot_r',
+                            'scapula_abduction_r',
+                            'scapula_elevation_r',
+                            'scapula_upward_rot_r',
                             
-                            # # 'scapula_abduction_l',
-                            # # 'scapula_elevation_l',
-                            # # 'scapula_upward_rot_l',                           
+                            # 'scapula_abduction_l',
+                            # 'scapula_elevation_l',
+                            # 'scapula_upward_rot_l',                           
                             
-                            # #Arm
-                            # 'elbow_flexion_r',
-                            # 'pro_sup_r',
-                            # # 'wrist_flexion_r',
-                            # # 'wrist_deviation_r',
+                            #Arm
+                            'elbow_flexion_r',
+                            'pro_sup_r',
+                            'wrist_flexion_r',
+                            'wrist_deviation_r',
                             
-                            # # 'elbow_flexion_l',
-                            # # 'pro_sup_l',                              
-                            # # 'wrist_flexion_l',
-                            # # 'wrist_deviation_l',
+                            # 'elbow_flexion_l',
+                            # 'pro_sup_l',                              
+                            # 'wrist_flexion_l',
+                            # 'wrist_deviation_l',
                                     
-                            # #Leg                         
-                            # # 'hip_flexion_r',
-                            # # 'hip_adduction_r',
-                            # # 'hip_rotation_r',
+                            #Leg                         
+                            # 'hip_flexion_r',
+                            # 'hip_adduction_r',
+                            # 'hip_rotation_r',
                             
-                            # # 'hip_adduction_l',
-                            # # 'hip_rotation_l',
-                            # # 'hip_flexion_l',
+                            # 'hip_adduction_l',
+                            # 'hip_rotation_l',
+                            # 'hip_flexion_l',
                             
                             'knee_angle_r',
                             'knee_angle_l',
@@ -143,6 +142,6 @@ if __name__ == '__main__':
     v = Viewer()
     v.playback_fps = fps
     v.scene.add(skel_seq)
-
-    v.scene.add(*todisplay)
+    
+    v.run_animations = True
     v.run()

@@ -55,8 +55,7 @@ If you want to run the Demos, you will also need our aitviewer fork for visualiz
 ```
 cd ..
 git clone https://github.com/MarilynKeller/aitviewer-skel.git
-cd aitviewer-skel
-pip install pyqt5 --verbose   
+cd aitviewer-skel 
 pip install -e .
 ```
 
@@ -70,6 +69,7 @@ First create an account on https://smpl.is.tue.mpg.de/.
 Then download this file: SMPL_python_v.1.1.0.zip from the download page. And run:
 
 ```
+cd ../SKEL
 python scripts/setup_smpl.py /path/to/SMPL_python_v.1.1.0.zip  
 ```
 
