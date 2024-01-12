@@ -110,7 +110,7 @@ python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_p
 
 # Alignment
 
-SKEL can be aligned to SMPL sequences. You can download SMPL sequences from the [AMASS](https://amass.is.tue.mpg.de/) Download page.
+SKEL can be aligned to SMPL sequences. You can download SMPL sequences from the [AMASS](https://amass.is.tue.mpg.de/) Download page, and selecting the `SMPL+H G` sequences.
 
 Here is the command to run the alignment:
 ```
