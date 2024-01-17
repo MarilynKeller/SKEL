@@ -97,10 +97,10 @@ Vizualize the shape space:
 python examples/skel_betas.py --gender female 
 ```
 
-Vizualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
+Vizualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.x/sample_motion/ ` and the corresponding SMPL motion.
 
 ```
-python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_poses_skel.pkl -z 
+python examples/skel_sequence.py /path/to/skel_models_v1.x/sample_motion/01_01_poses_skel.pkl -z 
 ```
 
 To visualize the SMPL sequence alongside : 
