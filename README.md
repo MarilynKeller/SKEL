@@ -12,6 +12,22 @@ SKEL is a parametric body shape and skeleton model. Its pose parameter lets you 
 
 For more information, please check our Siggraph 2023 paper: From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans.
 
+## Table of Contents of this README
+
+- [Installation](#installation)
+  - [Set up the environment](#set-up-the-environment)
+  - [Downloading SKEL](#downloading-skel)
+  - [Aitviewer](#aitviewer)
+  - [SMPL and Mesh package](#smpl-and-mesh-package)
+- [Demos](#demos)
+  - [Pose parameters](#pose-parameters)
+  - [Shape space](#shape-space)
+  - [SKEL sequence](#skel-sequence)
+- [Aligning SKEL to SMPL sequences](#aligning-skel-to-smpl-sequences)
+- [Acknoledgments](#acknoledgments)
+- [Citation](#citation)
+- [License](#license)
+- [Contact](#contact)
 
 ## Installation
 
@@ -79,6 +95,7 @@ pip install git+https://github.com/MPI-IS/mesh.git
 
 ## Demos
 
+### Pose parameters
 Visualize the effects of the pose parameters of SKEL:
 
 ```
@@ -88,12 +105,14 @@ python examples/skel_poses.py --gender male
 ![]()
 <img src="assets/pose_demo.png" alt="Image Description" style="width: 50%;" />
 
+### Shape space
 Vizualize the shape space:
 
 ```
 python examples/skel_betas.py --gender female 
 ```
 
+### SKEL sequence
 Visualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
 
 ```
@@ -105,7 +124,7 @@ To visualize the SMPL sequence alongside :
 python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_poses_skel.pkl -z --smpl_seq /path/to/skel_models_v1.0/sample_motion/01_01_poses.npz
 ```
 
-## Alignment
+## Aligning SKEL to SMPL sequences
 
 SKEL can be aligned to SMPL sequences. You can download SMPL sequences from the [AMASS](https://amass.is.tue.mpg.de/) Download page, and selecting the `SMPL+H G` sequences.
 
