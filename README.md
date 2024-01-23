@@ -4,7 +4,7 @@
 
 <img src="assets/Ypose_highres.png" alt="Image Description" style="width: 200px;" />
 
-SKEL is a parametric body shape and skeleton model. Its pose parameter lets you change the body shape and its pose parameter lets you pose the skeleton in an anatomical plausible way. Given shape and pose parameters, SKEL returns joint locations, a body mesh and a skeleton mesh. SKEL is differentiable and can be fit to various data like motion capture or SMPL sequences.
+SKEL is a parametric body shape and skeleton model. Its pose parameter lets you change the body shape and its pose parameter lets you pose the skeleton in an anatomically plausible way. Given shape and pose parameters, SKEL returns joint locations, a body mesh, and a skeleton mesh. SKEL is differentiable and can be fit to various data like motion capture or SMPL sequences.
 
 For more information, please check our Siggraph 2023 paper: From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans.
 
@@ -36,10 +36,10 @@ pip install -e .
 ```
 
 ## Downloading SKEL
-Create an account on https://skel.is.tue.mpg.de/. (Necessary for the download to work)
+Create an account on https://skel.is.tue.mpg.de/ (Necessary for the download to work).
 
 Then download the SKEL model from the download page with the "Download Models" button.
-Extract the downloaded folder and edit the file `SKEL/skel/config.py` to specify the folder containing the downloaded SKEL model folder : `skel_folder = '/path/to/skel_models_v1.0`
+Extract the downloaded folder and edit the file `SKEL/skel/config.py` to specify the folder containing the downloaded SKEL model folder: `skel_folder = '/path/to/skel_models_v1.0`
 
 
 To test the SKEL model, run:
@@ -66,7 +66,7 @@ Edit then the file `aitviewer/aitviewer/aitvconfig.yaml` to point to the SKEL fo
 
 ## SMPL and Mesh package
 If you want to run an alignment to SMPL, you need to download the SMPL model.
-First create an account on https://smpl.is.tue.mpg.de/.
+First, create an account on https://smpl.is.tue.mpg.de/.
 Then download this file: SMPL_python_v.1.1.0.zip from the download page. And run:
 
 ```
@@ -97,7 +97,7 @@ Vizualize the shape space:
 python examples/skel_betas.py --gender female 
 ```
 
-Vizualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
+Visualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
 
 ```
 python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_poses_skel.pkl -z 
@@ -114,8 +114,14 @@ SKEL can be aligned to SMPL sequences. You can download SMPL sequences from the 
 
 Here is the command to run the alignment:
 ```
-python examples/align_to_SMPL.py /path/to/AMASS/CMU/01/01_01_poses.npz -F  
+python examples/align_to_SMPL.py /path/to/AMASS/CMU/01/01_01_poses.npz -F 
 ```
+
+# Acknoledgments
+This research was done partly at [The Movement Lab](https://tml.stanford.edu/) in Stanford and [Perceiving Systems](https://ps.is.mpg.de/) at the Max Planck Institute for Intelligent Systems.
+
+We thank Neelay Shah for generating all the necessary SMPL fits, A. A. Osman for his expertise on parametric body models, Shashank Tripathi for his help with MOYO, Giorgio Becherini for his expertise on AMASS and mocap fit evaluation, Peter Kultis, Yao Feng and Yuliang Xu for feedbacks on the paper.
+We also thank the TML lab and the NMBL lab at Stanford for the fruitful discussions, especially Jennifer Maier for her expertise on the shoulder.
 
 # Citation
 If you use this software, please cite the following work and software:
@@ -133,9 +139,13 @@ If you use this software, please cite the following work and software:
 }
 ```
 
+## License
+
+This code and model are available for non-commercial scientific research purposes as defined in the [LICENSE.txt](LICENSE.txt) file.
+
 
 # Contact 
 
-For any question about SKEL loading, please contact skel@tuebingen.mpg.de.
+For any questions about SKEL loading, please contact skel@tuebingen.mpg.de.
 
 For commercial licensing, please contact ps-licensing@tue.mpg.de

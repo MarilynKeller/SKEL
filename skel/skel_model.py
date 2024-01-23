@@ -1,6 +1,6 @@
 
 """
-Copyright©2023 Max-Planck-Gesellschaft zur Förderung
+Copyright©2024 Max-Planck-Gesellschaft zur Förderung
 der Wissenschaften e.V. (MPG). acting on behalf of its Max Planck Institute
 for Intelligent Systems. All rights reserved.
 
