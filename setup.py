@@ -3,7 +3,8 @@ from setuptools import find_packages, setup
 requirements = ["wheel",
                 "torch>=1.6.0",
                 "smplx",
-                "trimesh"]
+                "trimesh",
+                "tqdm"]
 
 setup(
     name="skel",
