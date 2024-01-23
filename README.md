@@ -12,7 +12,7 @@ SKEL is a parametric body shape and skeleton model. Its pose parameter lets you 
 
 For more information, please check our Siggraph 2023 paper: From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans.
 
-## Table of Contents of this README
+## Table of Contents
 
 - [Installation](#installation)
   - [Set up the environment](#set-up-the-environment)
