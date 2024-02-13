@@ -112,6 +112,16 @@ Vizualize the shape space:
 python examples/skel_betas.py --gender female 
 ```
 
+### Rigging
+Visualize the skinning weights of the skin and bones to the SKEL kinematic tree:
+
+
+```
+python examples/skel_rigging.py --gender female  
+```
+<img src="assets/rigging_demo.png" alt="Vizu of SKEL skinning weights" style="width: 400px;" />
+
+
 ### SKEL sequence
 Visualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
 
