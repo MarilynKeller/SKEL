@@ -231,7 +231,6 @@ class SkelFitter(object):
             poses = to_params(poses_skel[i_start:i_end].copy())
             betas = to_params(betas_skel[i_start:i_end].copy())
             trans = to_params(trans_skel[i_start:i_end].copy())
-            verts = verts[i_start:i_end]
             
             if i == 0 and not skel_data_init:
                 # Optimize the global rotation and translation for the initial fitting
