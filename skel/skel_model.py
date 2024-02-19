@@ -228,14 +228,34 @@ class SKEL(nn.Module):
         return param_index
         
         
-    def forward(self, poses, betas, trans, poses_type='skel', skelmesh=True):      
+    def forward(self, poses, betas, trans, poses_type='skel', skelmesh=True, dJ=None):      
         """
-        B = batch size
-        D = 3
-        Ns : skin vertices
-        Nk : skeleton vertices
+        params
+            poses : B x 46 tensor of pose parameters
+            betas : B x 10 tensor of shape parameters, same as SMPL
+            trans : B x 3 tensor of translation 
+            poses_type : str, 'skel', should not be changed
+            skelemesh : bool, if True, returns the skeleton vertices. The skeleton mesh is heavy so to fit on GPU memory, set to False when not needed.
+            dJ : B x 24 x 3 tensor of the offset of the joints location from the anatomical regressor. If None, the offset is set to 0.
+            
+        return SKELOutput class with the following fields:
+            betas: Optional[Tensor] = None
+            body_pose: Optional[Tensor] = None
+            skin_verts: Optional[Tensor] = None
+            skel_verts: Optional[Tensor] = None
+            joints: Optional[Tensor] = None
+            joints_ori: Optional[Tensor] = None
+            betas: Optional[Tensor] = None
+            poses: Optional[Tensor] = None
+            trans : Optional[Tensor] = None
+            pose_offsets : Optional[Tensor] = None
         
+        In this function we use the following conventions:
+        B : batch size
+        Ns : skin vertices
+        Nk : skeleton vertices    
         """
+        
         Ns = self.skin_template_v.shape[0] # nb skin vertices
         Nk = self.skel_template_v.shape[0] # nb skeleton vertices
         Nj = self.num_joints
@@ -246,6 +266,9 @@ class SKEL(nn.Module):
         assert len(betas.shape) == 2, f"Betas should be of shape (B, {self.num_betas}), but got {betas.shape}"
         assert poses.shape[0] == betas.shape[0], f"Expected poses and betas to have the same batch size, but got {poses.shape[0]} and {betas.shape[0]}"
         assert poses.shape[0] == trans.shape[0], f"Expected poses and betas to have the same batch size, but got {poses.shape[0]} and {trans.shape[0]}"
+        assert len(dJ.shape) == 3, f"Expected dJ to have shape (B, {Nj}, 3), but got {dJ.shape}" 
+        assert dJ is None or dJ.shape[0] == B, f"Expected dJ to have the same batch size as poses, but got {dJ.shape[0]} and {poses.shape[0]}"
+        assert dJ.shape[1] == Nj, f"Expected dJ to have the same number of joints as the model, but got {dJ.shape[1]} and {Nj}"
         
         # Check the device of the inputs
         assert betas.device == device, f"Betas should be on device {device}, but got {betas.device}"
@@ -282,6 +305,8 @@ class SKEL(nn.Module):
         J = torch.einsum('bik,ji->bjk', [v_shaped, self.J_regressor_osim]) # BxJx3 # osim regressor
         # J = self.apose_transfo[:, :3, -1].view(1, Nj, 3).expand(B, -1, -1)  # Osim default pose joints location
         
+        if dJ is not None:
+            J = J + dJ
         
         # Local translation
         J_ = J.clone() # BxJx3
