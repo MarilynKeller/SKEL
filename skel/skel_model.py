@@ -230,12 +230,31 @@ class SKEL(nn.Module):
         
     def forward(self, poses, betas, trans, poses_type='skel', skelmesh=True):      
         """
-        B = batch size
-        D = 3
-        Ns : skin vertices
-        Nk : skeleton vertices
+        params
+            poses : B x 46 tensor of pose parameters
+            betas : B x 10 tensor of shape parameters, same as SMPL
+            trans : B x 3 tensor of translation 
+            poses_type : str, 'skel', should not be changed
+            skelemesh : bool, if True, returns the skeleton vertices. The skeleton mesh is heavy so to fit on GPU memory, set to False when not needed.
+
+        return SKELOutput class with the following fields:
+            betas: Optional[Tensor] = None
+            body_pose: Optional[Tensor] = None
+            skin_verts: Optional[Tensor] = None
+            skel_verts: Optional[Tensor] = None
+            joints: Optional[Tensor] = None
+            joints_ori: Optional[Tensor] = None
+            betas: Optional[Tensor] = None
+            poses: Optional[Tensor] = None
+            trans : Optional[Tensor] = None
+            pose_offsets : Optional[Tensor] = None
         
+        In this function we use the following conventions:
+        B : batch size
+        Ns : skin vertices
+        Nk : skeleton vertices    
         """
+        
         Ns = self.skin_template_v.shape[0] # nb skin vertices
         Nk = self.skel_template_v.shape[0] # nb skeleton vertices
         Nj = self.num_joints
