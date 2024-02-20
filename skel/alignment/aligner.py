@@ -168,6 +168,12 @@ class SkelFitter(object):
         init_optim_params = {'lr': 1e0, 'max_iter': 25, 'num_steps': 10}
         seq_optim_params = {'lr': 1e-1, 'max_iter': 10, 'num_steps': 10}
         
+        betas_in = betas_in[..., :self.num_betas]
+        
+        if len(betas_in.shape) == 1:
+            # Expand in numpy
+            betas_in = betas_in.repeat(poses_in.shape[0], 1)
+        
         nb_frames = poses_in.shape[0]
         print('Fitting {} frames'.format(nb_frames))
         
@@ -220,7 +226,7 @@ class SkelFitter(object):
             
             # SMPL params
             poses_smpl = to_torch(poses_in[i_start:i_end].copy())
-            betas_smpl = to_torch(betas_in[:self.num_betas].copy()).expand(i_end-i_start, -1)
+            betas_smpl = to_torch(betas_in[i_start:i_end].copy()).expand(i_end-i_start, -1)
             trans_smpl = to_torch(trans_in[i_start:i_end].copy())
             
             # Run a SMPL forward pass to get the SMPL body vertices
@@ -270,22 +276,40 @@ def load_smpl_seq(smpl_seq_path):
     if smpl_seq_path.endswith('.pkl'):
         data_dict = pickle.load(open(smpl_seq_path, 'rb'))
     
+        # For YOGI data
+            
+        if 'trans' not in data_dict.keys() and 'transl' in data_dict.keys():
+            data_dict['trans'] = data_dict['transl']
+            data_dict.pop('transl')
+            
+        if 'gender' not in data_dict.keys():
+            print("WARNING: The data seems to be from the YOGI dataset and the gender is not specified in the pickle file. So we assume it is female.")
+            data_dict['gender'] = 'female'
+            
+        if 'poses' not in data_dict.keys() and 'body_pose' in data_dict.keys() and 'global_orient' in data_dict.keys():
+            poses = np.concatenate([data_dict['global_orient'], data_dict['body_pose']], axis=1)
+            data_dict['poses'] = poses
+            
     elif smpl_seq_path.endswith('.npz'):
         data_dict = np.load(smpl_seq_path)
         data_dict = {key: data_dict[key] for key in data_dict.keys()} # convert to python dict
         
         # In some npz, the gender type happens to be: array('male', dtype='<U4'). So we convert it to string
         if not isinstance(data_dict['gender'], str):
-            data_dict['gender'] = str(data_dict['gender'])
+            data_dict['gender'] = str(data_dict['gender'])          
             
+        # For SMPL-H data
         if data_dict['poses'].shape[1] == 156:
             # Those are SMPL+H poses, we remove the hand poses to keep only the body poses
             poses = np.zeros((data_dict['poses'].shape[0], 72))
             poses[:, :72-2*3] = data_dict['poses'][:, :72-2*3] # We leave params for SMPL joints 22 and 23 to zero 
             data_dict['poses'] = poses
+            
+    # Remove the hand fold as it is not supported by the SKEL model
+    data_dict['poses'][:,72-2*3:] = 0
         
     for key in ['trans', 'poses', 'betas', 'gender']:
-        assert key in data_dict.keys(), f'Could not find {key} in {smpl_seq_path}. Available keys: {data_dict.keys()})'
+        assert key in data_dict.keys(), f'Could not find key "{key}" in dictionary "{smpl_seq_path}". Available keys: {data_dict.keys()})'
         
     out_dict = {}
     out_dict['trans'] = data_dict['trans']
