@@ -165,8 +165,8 @@ class SkelFitter(object):
         """Align SKEL to a SMPL sequence."""
 
         # Optimization params
-        init_optim_params = {'lr': 1e0, 'max_iter': 25, 'num_steps': 10}
-        seq_optim_params = {'lr': 1e-1, 'max_iter': 10, 'num_steps': 10}
+        init_optim_params = {'lr': 1e0, 'max_iter': 25, 'num_steps': 20}
+        seq_optim_params = {'lr': 1e-1, 'max_iter': 25, 'num_steps': 20}
         
         betas_in = betas_in[..., :self.num_betas]
         
@@ -238,7 +238,7 @@ class SkelFitter(object):
             betas = to_params(betas_skel[i_start:i_end].copy())
             trans = to_params(trans_skel[i_start:i_end].copy())
             
-            if i == 0 and not skel_data_init:
+            if i == 0 and (not skel_data_init or force_recompute):
                 # Optimize the global rotation and translation for the initial fitting
                 optim([trans,poses], poses, betas, trans, verts, self.skel, self.device, rot_only=True, watch_frame=watch_frame)
                 optim([trans,poses], poses, betas, trans, verts, self.skel, self.device, watch_frame=watch_frame, **init_optim_params)

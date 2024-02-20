@@ -16,38 +16,40 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Visualize a SKEL sequence.')
     
-    parser.add_argument('skel_pkl', type=str, help='Path to the SKEL sequence to visualize.')
+    parser.add_argument('skel_file', type=str, help='Path to the SKEL sequence to visualize.')
     parser.add_argument('--smpl_seq', type=str, help='The corresponding SMPL sequence', default=None)
+    parser.add_argument('--fps', type=int, help='Fps of the sequence', default=120)
     parser.add_argument('-z', '--z-up', help='Use Z-up coordinate system. \
         This is usefull for vizualizing sequences of AMASS that are 90 degree rotated', action='store_true')
+    parser.add_argument('-g', '--gender', type=str, help='Forces the gender for visualization. By default, the code tries to load the gender from the skel file')
     
     args = parser.parse_args()
     
     to_display = []
     
-    fps_in = 120 # Fps of the sequence
+    fps_in = args.fps # Fps of the sequence
     fps_out = 30 # Fps at which the sequence will be played back
     # The skeleton mesh has a lot of vertices, so we don't load all the frames to avoid memory issues
-
-    skel_seq = SKELSequence.from_pkl(skel_seq_pkl = args.skel_pkl, 
-                                     poses_type='skel', 
-                                     fps_in=fps_in,
-                                     fps_out=fps_out,
-                                     is_rigged=True, 
-                                     show_joint_angles=True, 
-                                     name='SKEL', 
-                                     z_up=args.z_up)
-    to_display.append(skel_seq)
-    
     if args.smpl_seq is not None:
-        smpl_seq = SMPLSequence.from_amass(
+        smpl_seq = SMPLSequence.from_smpl_data(
                         npz_data_path=args.smpl_seq,
                         fps_out=fps_out,
                         name="SMPL",
                         show_joint_angles=True,
                         position=np.array([-1.0, 0.0, 0.0]),
+                        z_up=args.z_up
                         )   
         to_display.append(smpl_seq)
+
+    skel_seq = SKELSequence.from_file(skel_seq_file = args.skel_file, 
+                                     poses_type='skel', 
+                                     fps_in=fps_in,
+                                     fps_out=fps_out,  
+                                     is_rigged=True, 
+                                     show_joint_angles=True, 
+                                     name='SKEL', 
+                                     z_up=args.z_up)
+    to_display.append(skel_seq)
 
     v = Viewer()
     v.playback_fps = fps_out
