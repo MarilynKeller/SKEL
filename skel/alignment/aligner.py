@@ -171,8 +171,8 @@ class SkelFitter(object):
         betas_in = betas_in[..., :self.num_betas]
         
         if len(betas_in.shape) == 1:
-            # Expand in numpy
-            betas_in = betas_in.repeat(poses_in.shape[0], 1)
+            # Expand in numpy to the number of frames
+            betas_in = np.tile(betas_in, (poses_in.shape[0], 1))
         
         nb_frames = poses_in.shape[0]
         print('Fitting {} frames'.format(nb_frames))
@@ -226,10 +226,11 @@ class SkelFitter(object):
             
             # SMPL params
             poses_smpl = to_torch(poses_in[i_start:i_end].copy())
-            betas_smpl = to_torch(betas_in[i_start:i_end].copy()).expand(i_end-i_start, -1)
+            betas_smpl = to_torch(betas_in[i_start:i_end].copy())
             trans_smpl = to_torch(trans_in[i_start:i_end].copy())
             
             # Run a SMPL forward pass to get the SMPL body vertices
+            import ipdb; ipdb.set_trace()
             smpl_output = self.smpl(betas=betas_smpl, body_pose=poses_smpl[:,3:], transl=trans_smpl, global_orient=poses_smpl[:,:3])
             verts = smpl_output.vertices
             

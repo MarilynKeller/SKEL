@@ -32,6 +32,7 @@ def optim(params,
         optimizer = torch.optim.LBFGS(params, lr=lr, max_iter=max_iter, line_search_fn=line_search_fn)
         pbar = trange(num_steps, leave=False)
         mv = MeshViewer(keepalive=True)
+        
 
         def closure():
             optimizer.zero_grad()
@@ -50,6 +51,8 @@ def optim(params,
                     + location_to_spheres(target_joints.detach().cpu().numpy()[fi], color=(0,1,0), radius=0.02) # The joints we want to match are in green
                     # + [Mesh(v=output.skel_verts[fi].detach().cpu().numpy(), f=skel_model.skel_f.cpu().numpy(), vc='white')] \
             mv.set_dynamic_meshes(meshes_to_display)
+            import ipdb; ipdb.set_trace()
+
           
             # Only optimize the global rotation of the SKEL model
             if rot_only:
@@ -169,7 +172,7 @@ if __name__ == "__main__":
         rot_only=False)
 
     optimized_skel_output = skel_model(pose, betas, trans)
-    optimized_skin_mesh = Mesh(v=optimized_skel_output.skin_verts.cpu().numpy(), f=skel_model.skin_f.cpu().numpy())
+    optimized_skin_mesh = Mesh(v=optimized_skel_output.skin_verts.detach().cpu().numpy(), f=skel_model.skin_f.cpu().numpy())
     optimized_skin_mesh.show()
 
     # Uncomment to save the mesh as a .ply file
