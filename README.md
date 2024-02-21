@@ -22,9 +22,12 @@ For more information, please check our Siggraph 2023 paper: From Skin to Skeleto
 - [Demos](#demos)
   - [Pose parameters](#pose-parameters)
   - [Shape space](#shape-space)
+  - [Rigging](#rigging)
   - [SKEL sequence](#skel-sequence)
-- [Aligning SKEL to SMPL sequences](#aligning-skel-to-smpl-sequences)
-- [Acknoledgments](#acknoledgments)
+  - [SKEL sequence](#skel-sequence)
+  - [Aligning SKEL to SMPL sequences](#aligning-skel-to-smpl-sequences)
+  - [Aligning SKEL's skin to another skeleton model joint locations](#aligning-skels-skin-to-another-skeleton-model-joint-locations)
+- [Acknowledgments](#acknoledgments)
 - [Citation](#citation)
 - [License](#license)
 - [Contact](#contact)
@@ -92,6 +95,7 @@ For visualizing the fitting process you need the MPI mesh package, you can insta
 ```
 pip install git+https://github.com/MPI-IS/mesh.git  
 ```
+Note that the mesh package is only supported on Linux, but it is only necessary for the visualization of the fitting processes.
 
 ## Demos
 
@@ -122,6 +126,14 @@ python examples/skel_rigging.py --gender female
 <img src="assets/rigging_demo.png" alt="Vizu of SKEL skinning weights" style="width: 400px;" />
 
 
+Visualize the kinematic tree and joint locations of SKEL:
+
+```
+python examples/skel_kintree.py --gender female
+```
+
+<img src="assets/skel_kin_tree.png" alt="Vizu of SKEL kin tree" style="width: 400px;" />
+
 ### SKEL sequence
 Visualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
 
@@ -141,6 +153,14 @@ SKEL can be aligned to SMPL sequences. You can download SMPL sequences from the 
 Here is the command to run the alignment:
 ```
 python examples/align_to_SMPL.py /path/to/AMASS/CMU/01/01_01_poses.npz -F 
+```
+
+## Aligning SKEL's skin to another skeleton model joint locations
+
+If you have another skeleton model, you can define the mapping between your skeleton model joints and SKEL's joint and optimize SKEL.shape and pose in consequence to obtain a skin mesh that fits your skeleton model.
+
+```
+python examples/fit2joints.py 
 ```
 
 ## Acknoledgments
