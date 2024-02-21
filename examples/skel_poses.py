@@ -124,8 +124,7 @@ if __name__ == '__main__':
     trans = torch.zeros((poses.shape[0], 3), dtype=torch.float32)
     
     skel_seq = SKELSequence(skel_layer=skel_model, betas=betas, poses_body=poses, poses_type='skel', 
-                            trans=trans, is_rigged=True, show_joint_angles=True, name='SKEL', z_up=False,
-                            skinning_weights_color=False
+                            trans=trans, is_rigged=True, show_joint_angles=True, name='SKEL', z_up=False
                             )
     
     if args.export_mesh:
