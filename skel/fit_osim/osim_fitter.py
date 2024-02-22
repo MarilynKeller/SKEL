@@ -17,6 +17,9 @@ if __name__ == '__main__':
     
     osim_markers, osim_joints, osim_joints_ori = osim.run_fk()
     
+    #Print the BSM model joints location
+    print(f'Osim joints: {osim_joints}')
+    
     print(f'joints shape: {osim_joints.shape}')
     print(f'joints_ori shape: {osim_joints_ori.shape}')
     print(f'markers shape: {osim_markers.shape}')

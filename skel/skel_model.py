@@ -473,15 +473,14 @@ class SKEL(nn.Module):
             skel_rest_shape_h = torch.cat([skel_v0, torch.ones_like(skel_v0)[:, :, [0]]], dim=-1).expand(B, Nk, -1) # (1,Nk,3)
 
             # compute the bones scaling from the kinematic tree and skin mesh
-            with torch.no_grad():
-                bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
-                            
-                # Apply bone meshes scaling:
-                skel_v_shaped = torch.cat([(torch.matmul(bone_scale[:,:,0], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 0])[:, :, None], 
-                                        (torch.matmul(bone_scale[:,:,1], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 1])[:, :, None],
-                                        (torch.matmul(bone_scale[:,:,2], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 2])[:, :, None],
-                                        (torch.ones(B, Nk, 1).to(device))
-                                        ], dim=-1) 
+            bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
+                        
+            # Apply bone meshes scaling:
+            skel_v_shaped = torch.cat([(torch.matmul(bone_scale[:,:,0], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 0])[:, :, None], 
+                                    (torch.matmul(bone_scale[:,:,1], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 1])[:, :, None],
+                                    (torch.matmul(bone_scale[:,:,2], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 2])[:, :, None],
+                                    (torch.ones(B, Nk, 1).to(device))
+                                    ], dim=-1) 
                 
             
             # Align the bones with the proper axis

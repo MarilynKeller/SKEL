@@ -68,12 +68,12 @@ def optim(params,
             output = skel_model.forward(poses=poses_in, betas=betas, trans=trans, poses_type='skel', skelmesh=False)
 
             # Loss to fit SKEL to the target joints
-            joint_loss = ((output.joints - target_joints)*target_joints_mask).pow(2).mean()
+            joint_loss = 1e4 * ((output.joints - target_joints)*target_joints_mask).pow(2).mean()
             
             # Regularize the pose so that it stays close to the initial T pose
-            pose_loss = 5e-5*compute_pose_loss(poses)    
+            pose_loss = 1e-1*compute_pose_loss(poses)    
             
-            scapula_loss = 1e-2 * compute_scapula_loss(poses_in)     
+            scapula_loss = 1e2 * compute_scapula_loss(poses_in)     
         
             loss = joint_loss + pose_loss + scapula_loss
             
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     
     # Myosuite model joints locations
     skel_joints_locations = [
-        [0., 0.94, 0.], #body_root
+        [0, 0, 0], #body_root #[0., 0.94, 0.]
         [-0.07730479, 0.99615194, -0.07853474], #femur_r
         [-0.0817168, 1.02758444, -0.48171425], #tibia_r
         [-0.08733976, 1.06863995, -0.87968765], #talus_r
@@ -209,8 +209,9 @@ if __name__ == "__main__":
         target_joints=target_joints,
         target_joints_mask=target_joints_mask,
         skel_model = skel_model, 
+        lr=5e-1,
         max_iter=50,
-        num_steps=5,
+        num_steps=25,
         device = device, 
         rot_only=False)
 
@@ -223,7 +224,7 @@ if __name__ == "__main__":
     if socket.gethostname() == 'ps019':
         skin_mesh_dst="/home/mkeller2/data2/Code/myo_SKEL/assets/skin.obj"
     else:
-        skin_mesh_dst="./skin.obj"
+        skin_mesh_dst="./SKEL.obj"
 
     optimized_skin_mesh.write_obj(skin_mesh_dst)
     print(f"Optimized mesh saved at {skin_mesh_dst}")
