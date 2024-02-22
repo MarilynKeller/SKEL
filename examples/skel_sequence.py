@@ -21,8 +21,9 @@ if __name__ == "__main__":
     parser.add_argument('--fps', type=int, help='Fps of the sequence', default=120)
     parser.add_argument('-z', '--z-up', help='Use Z-up coordinate system. \
         This is usefull for vizualizing sequences of AMASS that are 90 degree rotated', action='store_true')
-    parser.add_argument('-g', '--gender', type=str, help='Forces the gender for visualization. By default, the code tries to load the gender from the skel file')
-    
+    parser.add_argument('-g', '--gender', type=str, default=None, help='Forces the gender for visualization. By default, the code tries to load the gender from the skel file')
+    parser.add_argument('-e', '--export_mesh', type=str, help='Export the mesh of the skel model to this folder', default=None)
+
     args = parser.parse_args()
     
     to_display = []
@@ -48,7 +49,12 @@ if __name__ == "__main__":
                                      is_rigged=True, 
                                      show_joint_angles=True, 
                                      name='SKEL', 
-                                     z_up=args.z_up)
+                                     z_up=args.z_up,
+                                     gender = args.gender)
+    
+    if args.export_mesh:
+        skel_seq.export_meshes(args.export_mesh)
+    
     to_display.append(skel_seq)
 
     v = Viewer()

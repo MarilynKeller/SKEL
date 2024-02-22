@@ -3,7 +3,9 @@
 This script is a base to optimize the pose and body shape of the SKEL model to match a 3D skeleton.
 """
 
+import argparse
 import math
+import sys
 from skel.alignment.aligner import compute_pose_loss, compute_scapula_loss
 from skel.utils import location_to_spheres
 import torch
@@ -77,8 +79,7 @@ def optim(params,
             # make a pretty print of the losses
             print(f"Joint loss: {joint_loss.item():.4f}, \
                   Pose loss: {pose_loss.item():.4f}, \
-                  Scapula loss: {scapula_loss.item():.4f} \
-                  ")
+                  Scapula loss: {scapula_loss.item():.4f}")
       
             loss.backward()
         
@@ -91,6 +92,12 @@ def optim(params,
             pbar.set_postfix_str(f"Loss {loss:.4f}")
 
 if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser(description='Fit the SKEL model to a 3D skeleton')
+    
+    parser.add_argument('--print_joints', action='store_true', help='Print the joints location of the SKEL mean body T pose')
+    
+    args = parser.parse_args()
 
     """ Fill this array that gives the 3D location of each joint for your skeleton model. 
     For the joints that do not have an equivalent in the SKEL model, you can set the location to [0,0,0]
@@ -131,7 +138,13 @@ if __name__ == "__main__":
     betas = torch.zeros(1, skel_model.num_betas).to(device) # (1, 10)
     trans = torch.zeros(1, 3).to(device)
 
-
+    if args.print_joints:
+        # Print the location of the SKEL mean body T pose joints
+        skel_output = skel_model(pose, betas, trans)
+        skeleton_joints_locations = skel_output['joints'] # (1, 24, 3)
+        print('\nSKEL mean body T pose joints locations:')
+        print(skeleton_joints_locations[0].tolist())
+        sys.exit()
 
     # This bit is for generating the upper example joints locations
     if False:
