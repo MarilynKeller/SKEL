@@ -18,7 +18,6 @@ if __name__ == "__main__":
     
     parser.add_argument('skel_pkl', type=str, help='Path to the SKEL sequence to visualize.')
     parser.add_argument('--smpl_seq', type=str, help='The corresponding SMPL sequence', default=None)
-    parser.add_argument('--fps', type=int, help='Fps of the sequence', default=120)
     parser.add_argument('-z', '--z-up', help='Use Z-up coordinate system. \
         This is usefull for vizualizing sequences of AMASS that are 90 degree rotated', action='store_true')
     
@@ -26,19 +25,9 @@ if __name__ == "__main__":
     
     to_display = []
     
-    fps_in = args.fps # Fps of the sequence
+    fps_in = 120 # Fps of the sequence
     fps_out = 30 # Fps at which the sequence will be played back
     # The skeleton mesh has a lot of vertices, so we don't load all the frames to avoid memory issues
-    if args.smpl_seq is not None:
-        smpl_seq = SMPLSequence.from_amass(
-                        npz_data_path=args.smpl_seq,
-                        fps_out=fps_out,
-                        name="SMPL",
-                        show_joint_angles=True,
-                        position=np.array([-1.0, 0.0, 0.0]),
-                        z_up=args.z_up
-                        )   
-        to_display.append(smpl_seq)
 
     skel_seq = SKELSequence.from_pkl(skel_seq_pkl = args.skel_pkl, 
                                      poses_type='skel', 
@@ -49,6 +38,16 @@ if __name__ == "__main__":
                                      name='SKEL', 
                                      z_up=args.z_up)
     to_display.append(skel_seq)
+    
+    if args.smpl_seq is not None:
+        smpl_seq = SMPLSequence.from_amass(
+                        npz_data_path=args.smpl_seq,
+                        fps_out=fps_out,
+                        name="SMPL",
+                        show_joint_angles=True,
+                        position=np.array([-1.0, 0.0, 0.0]),
+                        )   
+        to_display.append(smpl_seq)
 
     v = Viewer()
     v.playback_fps = fps_out
