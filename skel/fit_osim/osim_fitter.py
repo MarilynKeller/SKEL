@@ -40,3 +40,4 @@ if __name__ == '__main__':
     # joint_losses = (skel_output.joints[:, mask, :] - osim_joints)
     # marker_losses = (skel_output.skin_verts[:, skel_verts_mask, :] - osim_markers[:, osim_mk_mask, :]) # ensure proper rotation of the forearm
     # By optimizing its betas and poses parameter
+    
