@@ -31,14 +31,19 @@ if __name__ == '__main__':
         skel_data_init = None
     
     skel_fitter = SkelFitter(smpl_seq['gender'], device='cuda:0')
-    skel_seq = skel_fitter.fit(smpl_seq['trans'], 
-                               smpl_seq['betas'], 
-                               smpl_seq['poses'], 
+    skel_seq = skel_fitter.fit(smpl_seq['trans'], # Fx3 sequence of translation value (F is the number of frames)
+                               smpl_seq['betas'], # Fx10 sequence of betas, same as SMPL
+                               smpl_seq['poses'], # Fx72 sequence of SMPL pose parameters
                                batch_size = args.batch_size,
                                skel_data_init=skel_data_init, 
                                force_recompute=args.force_recompute,
                                debug=args.debug,
                                watch_frame=args.watch_frame)
-    
+
+    # The returned skel_seq object is a dictionnary containing
+    # - poses: an Fx46 array of SKEL pose parameters
+    # - betas: an Fx10 array of SKEL shape parameters (identical to the input SMPL betas array)
+    # - trans: an Fx3 array of SKEL root translation
+
     pickle.dump(skel_seq, open(out_path, 'wb'))
     print('Saved aligned SKEL sequence to {}'.format(out_path))
