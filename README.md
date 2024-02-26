@@ -10,10 +10,11 @@ This repo contains the pytorch SKEL loader and the code to align it to SMPL sequ
 
 SKEL is a parametric body shape and skeleton model. Its pose parameter lets you change the body shape and its pose parameter lets you pose the skeleton in an anatomically plausible way. Given shape and pose parameters, SKEL returns joint locations, a body mesh, and a skeleton mesh. SKEL is differentiable and can be fit to various data like motion capture or SMPL sequences.
 
-For more information, please check our Siggraph 2023 paper: From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans.
+For more details, please check our Siggraph 2023 paper: From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans.
 
 ## Table of Contents
 
+- [Quickstart](#quickstart)
 - [Installation](#installation)
   - [Set up the environment](#set-up-the-environment)
   - [Downloading SKEL](#downloading-skel)
@@ -31,6 +32,30 @@ For more information, please check our Siggraph 2023 paper: From Skin to Skeleto
 - [Citation](#citation)
 - [License](#license)
 - [Contact](#contact)
+
+## Quickstart
+
+For a minimal use, you will have to follow the install instructions in [Set up the environment](#set-up-the-environment) and [Downloading SKEL](#downloading-skel).
+
+To test the SKEL model, you can then run:
+``` 
+python quickstart.py 
+```
+This runs the forward pass of SKEL and saves the output as separated body and skeleton meshes.
+
+You can then try to change the SKEK parameters knowing the following. SKEL is controled by two parameters:
+
+- `betas` controls the shape of the body (tall, small, skinny, etc...). It is a vector of size 10. The values should remain between -2 and 2. The first value of the vector roughly controls the height, the second value the weight.
+
+- `pose` controls the body pose. It is a vector of size 46, most values are in radiant angles so between -3.14 and 3.14. See [here](https://github.com/MarilynKeller/SKEL/blob/21e1b6aad914cc2910d12cf2715784ef90c5f137/skel/kin_skel.py#L29) to see which of the 46 parameters controls which body articulation.
+
+SKEL(beta, pose) yields:
+- A skeleton 3D mesh
+- A body mesh
+- Anatomical joint locations
+
+The rest of this readme will let you setup our SKEL vizualizer and run some demo code. We hope you enjoy our work!
+
 
 ## Installation
 
@@ -58,12 +83,7 @@ Then download the SKEL model from the download page with the "Download Models" b
 Extract the downloaded folder and edit the file `SKEL/skel/config.py` to specify the folder containing the downloaded SKEL model folder: `skel_folder = '/path/to/skel_models_v1.0`
 
 
-To test the SKEL model, run:
-``` 
-python quickstart.py 
-```
-This runs the forward pass of SKEL and saves the output as separated body and skeleton meshes.
-
+Below, we explain how to set up the visualizer for SKEL (only supported on Linux and Mac), and run some example code.
 
 ### Aitviewer
 
