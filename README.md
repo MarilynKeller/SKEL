@@ -1,6 +1,6 @@
 ## SKEL
 
-https://github.com/MarilynKeller/SKEL/assets/102662583/cc17a5cd-c486-4934-8bc1-1bf79944f215
+<img src="assets/Ypose_highres.png" alt="Image Description" style="width: 200px;" />
 
 This repository is part of the code release for the Siggraph Asia 2023 paper "From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans". 
 
