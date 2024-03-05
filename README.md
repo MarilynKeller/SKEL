@@ -154,6 +154,8 @@ python examples/skel_kintree.py --gender female
 
 <img src="assets/skel_kin_tree.png" alt="Vizu of SKEL kin tree" style="width: 400px;" />
 
+You can see a visual of the joint ids [here](assets/skel_kin_tree_nb.jpg) and their names and the list of degrees of freedom [here](skel/kin_skel.py)
+
 ### SKEL sequence
 Visualize a SKEL sequence. You can find a sample SKEL motion in `skel_models_v1.0/sample_motion/ ` and the corresponding SMPL motion.
 
