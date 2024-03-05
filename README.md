@@ -47,7 +47,7 @@ You can then try to change the SKEL parameters knowing the following. SKEL is co
 
 - `betas` controls the shape of the body (tall, small, skinny, etc...). It is a vector of size 10. The values should remain between -2 and 2. The first value of the vector roughly controls the height, the second value the weight.
 
-- `pose` controls the body pose. It is a vector of size 46, most values are in radiant angles so between -3.14 and 3.14. See [here](https://github.com/MarilynKeller/SKEL/blob/21e1b6aad914cc2910d12cf2715784ef90c5f137/skel/kin_skel.py#L29) to see which of the 46 parameters controls which body articulation.
+- `pose` controls the body pose. It is a vector of size 46, most values are angles expressed in radian, and can vary between -3.14 and 3.14. You can see which of the 46 parameters controls which body articulation [here](https://github.com/MarilynKeller/SKEL/blob/21e1b6aad914cc2910d12cf2715784ef90c5f137/skel/kin_skel.py#L29) .
 
 SKEL(beta, pose) yields:
 - A skeleton 3D mesh
