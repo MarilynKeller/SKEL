@@ -43,7 +43,7 @@ python quickstart.py
 ```
 This runs the forward pass of SKEL and saves the output as separated body and skeleton meshes.
 
-You can then try to change the SKEK parameters knowing the following. SKEL is controled by two parameters:
+You can then try to change the SKEL parameters knowing the following. SKEL is controled by two parameters:
 
 - `betas` controls the shape of the body (tall, small, skinny, etc...). It is a vector of size 10. The values should remain between -2 and 2. The first value of the vector roughly controls the height, the second value the weight.
 
