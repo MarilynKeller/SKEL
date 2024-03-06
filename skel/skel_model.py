@@ -67,6 +67,7 @@ class SKELOutput(ModelOutput):
     poses: Optional[Tensor] = None
     trans : Optional[Tensor] = None
     pose_offsets : Optional[Tensor] = None
+    joints_tpose : Optional[Tensor] = None
     
     
 class SKEL(nn.Module):
@@ -228,7 +229,7 @@ class SKEL(nn.Module):
         return param_index
         
         
-    def forward(self, poses, betas, trans, poses_type='skel', skelmesh=True, dJ=None):      
+    def forward(self, poses, betas, trans, poses_type='skel', skelmesh=True, dJ=None, pose_dep_bs=True):      
         """
         params
             poses : B x 46 tensor of pose parameters
@@ -237,7 +238,8 @@ class SKEL(nn.Module):
             poses_type : str, 'skel', should not be changed
             skelemesh : bool, if True, returns the skeleton vertices. The skeleton mesh is heavy so to fit on GPU memory, set to False when not needed.
             dJ : B x 24 x 3 tensor of the offset of the joints location from the anatomical regressor. If None, the offset is set to 0.
-            
+            pose_dep_bs : bool, if True (default), applies the pose dependant blend shapes. If False, the pose dependant blend shapes are not applied.
+        
         return SKELOutput class with the following fields:
             betas: Optional[Tensor] = None
             body_pose: Optional[Tensor] = None
@@ -309,6 +311,7 @@ class SKEL(nn.Module):
         
         if dJ is not None:
             J = J + dJ
+            J_tpose = J.clone()
         
         # Local translation
         J_ = J.clone() # BxJx3
@@ -420,20 +423,25 @@ class SKEL(nn.Module):
         G = torch.stack(G, dim=1)
         
         # ------- Pose dependant blend shapes ----------
-        # Note : Those should be retrained for SKEL as the SKEL joints location are different from SMPL.
-        # But the current version lets use get decent pose dependant deformations for the shoulders, belly and knies
-        ident = torch.eye(3, dtype=v_shaped.dtype, device=device)
+        if pose_dep_bs is False:
+                v_shaped_pd = v_shaped
+        else:
+            # Note : Those should be retrained for SKEL as the SKEL joints location are different from SMPL.
+            # But the current version lets use get decent pose dependant deformations for the shoulders, belly and knies
+            ident = torch.eye(3, dtype=v_shaped.dtype, device=device)
+            
+            # We need the per SMPL joint bone transform to compute pose dependant blend shapes.
+            # Initialize each joint rotation with identity
+            Rsmpl = ident.unsqueeze(0).unsqueeze(0).expand(B, self.num_joints_smpl, -1, -1) # BxNjx3x3 
+            
+            Rskin = G_[:, :, :3, :3] # BxNjx3x3
+            Rsmpl[:, smpl_joint_corresp] = Rskin.clone()[:] # BxNjx3x3 pose params to rotation
+            pose_feature = Rsmpl[:, 1:].view(B, -1, 3, 3) - ident
+            pose_offsets = torch.matmul(pose_feature.view(B, -1),
+                                        self.posedirs.view(Ns*3, -1).T).view(B, -1, 3)
+            v_shaped_pd = v_shaped + pose_offsets
         
-        # We need the per SMPL joint bone transform to compute pose dependant blend shapes.
-        # Initialize each joint rotation with identity
-        Rsmpl = ident.unsqueeze(0).unsqueeze(0).expand(B, self.num_joints_smpl, -1, -1) # BxNjx3x3 
-        
-        Rskin = G_[:, :, :3, :3] # BxNjx3x3
-        Rsmpl[:, smpl_joint_corresp] = Rskin.clone()[:] # BxNjx3x3 pose params to rotation
-        pose_feature = Rsmpl[:, 1:].view(B, -1, 3, 3) - ident
-        pose_offsets = torch.matmul(pose_feature.view(B, -1),
-                                    self.posedirs.view(Ns*3, -1).T).view(B, -1, 3)
-        v_shaped_pd = v_shaped + pose_offsets
+
           
         
         ##########################################################################################
@@ -528,7 +536,8 @@ class SKEL(nn.Module):
                             betas=betas,
                             poses=poses,
                             trans = trans,
-                            pose_offsets = pose_offsets)
+                            pose_offsets = pose_offsets,
+                            joints_tpose = J_tpose)
 
         return output
 
