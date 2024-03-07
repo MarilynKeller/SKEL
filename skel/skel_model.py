@@ -68,6 +68,7 @@ class SKELOutput(ModelOutput):
     trans : Optional[Tensor] = None
     pose_offsets : Optional[Tensor] = None
     joints_tpose : Optional[Tensor] = None
+    v_skin_shaped : Optional[Tensor] = None
     
     
 class SKEL(nn.Module):
@@ -541,7 +542,8 @@ class SKEL(nn.Module):
                             poses=poses,
                             trans = trans,
                             pose_offsets = pose_offsets,
-                            joints_tpose = J_tpose)
+                            joints_tpose = J_tpose,
+                            v_skin_shaped = v_shaped)
 
         return output
 
