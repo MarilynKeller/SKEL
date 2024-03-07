@@ -74,7 +74,7 @@ class SKEL(nn.Module):
 
     num_betas = 10
     
-    def __init__(self, gender, model_path=None, **kwargs):
+    def __init__(self, gender, model_path=None, custom_joint_reg_path=None, **kwargs):
         super(SKEL, self).__init__()
 
         if gender not in ['male', 'female']:
@@ -116,7 +116,11 @@ class SKEL(nn.Module):
         self.register_buffer('J_regressor', torch.FloatTensor(skel_data['J_regressor']))
         
         # Regress the anatomical joint location with a regressor learned from BioAmass
-        self.register_buffer('J_regressor_osim', torch.FloatTensor(skel_data['J_regressor_osim']))   
+        if custom_joint_reg_path is not None:
+            J_regressor_skel = pkl.load(open(custom_joint_reg_path, 'rb'))
+            self.register_buffer('J_regressor_osim', torch.FloatTensor(J_regressor_skel))  
+        else:
+            self.register_buffer('J_regressor_osim', torch.FloatTensor(skel_data['J_regressor_osim']))   
         self.register_buffer('joint_sockets', torch.FloatTensor(skel_data['joint_sockets']))
         
         self.register_buffer('per_joint_rot', torch.FloatTensor(skel_data['per_joint_rot']))
@@ -241,16 +245,15 @@ class SKEL(nn.Module):
             pose_dep_bs : bool, if True (default), applies the pose dependant blend shapes. If False, the pose dependant blend shapes are not applied.
         
         return SKELOutput class with the following fields:
-            betas: Optional[Tensor] = None
-            body_pose: Optional[Tensor] = None
-            skin_verts: Optional[Tensor] = None
-            skel_verts: Optional[Tensor] = None
-            joints: Optional[Tensor] = None
-            joints_ori: Optional[Tensor] = None
-            betas: Optional[Tensor] = None
-            poses: Optional[Tensor] = None
-            trans : Optional[Tensor] = None
-            pose_offsets : Optional[Tensor] = None
+            betas : Bx10 tensor of shape parameters
+            poses : Bx46 tensor of pose parameters
+            skin_verts : Bx6890x3 tensor of skin vertices
+            skel_verts : tensor of skeleton vertices
+            joints : Bx24x3 tensor of joints location
+            joints_ori : Bx24x3x3 tensor of joints orientation
+            trans : Bx3  pose dependant blend shapes offsets 
+            pose_offsets : Bx6080x3  pose dependant blend shapes offsets 
+            joints_tpose : Bx24x3 3D joints location in T pose 
         
         In this function we use the following conventions:
         B : batch size
