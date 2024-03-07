@@ -119,6 +119,7 @@ class SKEL(nn.Module):
         if custom_joint_reg_path is not None:
             J_regressor_skel = pkl.load(open(custom_joint_reg_path, 'rb'))
             self.register_buffer('J_regressor_osim', torch.FloatTensor(J_regressor_skel))  
+            print('WARNING: Using custom joint regressor')
         else:
             self.register_buffer('J_regressor_osim', torch.FloatTensor(skel_data['J_regressor_osim']))   
         self.register_buffer('joint_sockets', torch.FloatTensor(skel_data['joint_sockets']))
