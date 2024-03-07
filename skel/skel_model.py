@@ -311,7 +311,7 @@ class SKEL(nn.Module):
         
         if dJ is not None:
             J = J + dJ
-            J_tpose = J.clone()
+        J_tpose = J.clone()
         
         # Local translation
         J_ = J.clone() # BxJx3
