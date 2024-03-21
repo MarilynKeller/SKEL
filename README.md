@@ -100,7 +100,10 @@ Edit then the file `aitviewer/aitviewer/aitvconfig.yaml` to point to the SKEL fo
 
 ```skel_models: "/path/to/skel_models_v1.0"```
 
-### SMPL and Mesh package
+### SMPL and MPI Mesh package
+
+! Note that the MPI mesh package is only supported on Linux systems. If you are not on Linux, you will have to comment out the code depending on the package psbody.mesh and code your own visualization.
+
 If you want to run an alignment to SMPL, you need to download the SMPL model.
 First, create an account on https://smpl.is.tue.mpg.de/.
 Then download this file: SMPL_python_v.1.1.0.zip from the download page. And run:
