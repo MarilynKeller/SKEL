@@ -77,7 +77,11 @@ def optim(params,
         
         optimizer = torch.optim.LBFGS(params, lr=lr, max_iter=max_iter, line_search_fn=line_search_fn)
         pbar = trange(num_steps, leave=False)
-        mv = MeshViewer(keepalive=False)
+        if('DISABLE_VIEWER' in os.environ):
+            mv = None
+            print("\n DISABLE_VIEWER flag is set, running in headless mode")
+        else:
+            mv = MeshViewer(keepalive=False)
 
         def closure():
             optimizer.zero_grad()
@@ -94,7 +98,8 @@ def optim(params,
                     # + location_to_spheres(output.joints.detach().cpu().numpy()[frame_to_watch], color=(1,0,0), radius=0.02)
                     # + [Mesh(v=verts[frame_to_watch].detach().cpu().numpy(), f=smpl_data.faces, vc='green')] \
                     # + location_to_spheres(joints_reg[frame_to_watch].detach().cpu().numpy(), color=(0,1,0), radius=0.02) \
-            mv.set_dynamic_meshes(meshes_to_display)
+            if('DISABLE_VIEWER' not in os.environ):
+                mv.set_dynamic_meshes(meshes_to_display)
             
             # print(poses[frame_to_watch, :3])
             # print(trans[frame_to_watch])
