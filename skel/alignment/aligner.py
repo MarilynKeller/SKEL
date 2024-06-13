@@ -73,6 +73,7 @@ def optim(params,
         fitting_mask = torch.zeros(6890, dtype=torch.float)
         fitting_mask[fitting_indices] = 1
         fitting_mask = fitting_mask.unsqueeze(0).to(device)
+        dJ=torch.zeros((poses.shape[0], 24, 3), device=betas.device)
         
         optimizer = torch.optim.LBFGS(params, lr=lr, max_iter=max_iter, line_search_fn=line_search_fn)
         pbar = trange(num_steps, leave=False)
@@ -85,6 +86,7 @@ def optim(params,
                                         betas=betas[fi:fi+1], 
                                         trans=trans[fi:fi+1], 
                                         poses_type='skel', 
+                                        dJ=dJ[fi:fi+1],
                                         skelmesh=True)
             meshes_to_display = [Mesh(v=output.skin_verts[0].detach().cpu().numpy(), f=[], vc='white')] \
                     + [Mesh(v=verts[fi].detach().cpu().numpy(), f=[], vc='green')] \
@@ -106,7 +108,7 @@ def optim(params,
             else:
                 poses_in = poses
             
-            output = skel_model.forward(poses=poses_in, betas=betas, trans=trans, poses_type='skel', skelmesh=False)
+            output = skel_model.forward(poses=poses_in, betas=betas, trans=trans, poses_type='skel', dJ=dJ, skelmesh=False)
             
             # Fit the SMPL vertices
             # We know the skinning of the forearm and the neck are not perfect,
@@ -161,7 +163,8 @@ class SkelFitter(object):
     def fit(self, trans_in, betas_in, poses_in, batch_size=20, skel_data_init=None, 
             force_recompute=False, 
             debug=False,
-            watch_frame=0):
+            watch_frame=0,
+            freevert_mesh=None):
         """Align SKEL to a SMPL sequence."""
 
         # Optimization params
@@ -207,6 +210,8 @@ class SkelFitter(object):
             'trans':  [],
             'gender':  [],
         }
+
+            
         
         for i in pbar:
             
@@ -226,6 +231,8 @@ class SkelFitter(object):
             # Run a SMPL forward pass to get the SMPL body vertices
             smpl_output = self.smpl(betas=betas_smpl, body_pose=poses_smpl[:,3:], transl=trans_smpl, global_orient=poses_smpl[:,:3])
             verts = smpl_output.vertices
+            if(freevert_mesh is not None):
+                verts = to_torch(freevert_mesh).unsqueeze(0).repeat_interleave(batch_size, 0)
             
             # SKEL params        
             poses = to_params(poses_skel[i_start:i_end].copy())
