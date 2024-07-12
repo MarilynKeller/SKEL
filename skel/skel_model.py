@@ -494,16 +494,16 @@ class SKEL(nn.Module):
             skel_rest_shape_h = torch.cat([skel_v0, torch.ones_like(skel_v0)[:, :, [0]]], dim=-1).expand(B, Nk, -1) # (1,Nk,3)
 
             # compute the bones scaling from the kinematic tree and skin mesh
-            with torch.no_grad():
-                bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
-                            
-                # Apply bone meshes scaling:
-                skel_v_shaped = torch.cat([(torch.matmul(bone_scale[:,:,0], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 0])[:, :, None], 
-                                        (torch.matmul(bone_scale[:,:,1], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 1])[:, :, None],
-                                        (torch.matmul(bone_scale[:,:,2], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 2])[:, :, None],
-                                        (torch.ones(B, Nk, 1).to(device))
-                                        ], dim=-1) 
-                
+            #with torch.no_grad():
+            # TODO: when dJ is optimized the shape of the mesh should be affected by the gradients
+            bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
+            # Apply bone meshes scaling:
+            skel_v_shaped = torch.cat([(torch.matmul(bone_scale[:,:,0], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 0])[:, :, None], 
+                                    (torch.matmul(bone_scale[:,:,1], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 1])[:, :, None],
+                                    (torch.matmul(bone_scale[:,:,2], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 2])[:, :, None],
+                                    (torch.ones(B, Nk, 1).to(device))
+                                    ], dim=-1) 
+            # TODO:
             
             # Align the bones with the proper axis
             Gk01 = build_homog_matrix(Rk01, J.unsqueeze(-1)) # BxJx4x4
@@ -543,7 +543,7 @@ class SKEL(nn.Module):
                             trans = trans,
                             pose_offsets = pose_offsets,
                             joints_tpose = J_tpose,
-                            v_skin_shaped = v_shaped)
+                            v_shaped = v_shaped,)
 
         return output
 
