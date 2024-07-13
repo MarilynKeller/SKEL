@@ -11,8 +11,9 @@ import trimesh
 if __name__ == '__main__':
     
     device = 'cpu'
+    gender = 'female'
     
-    skel = SKEL(gender='female').to(device)
+    skel = SKEL(gender='female', custom_joint_reg_path='/home/mkeller2/data2/Code/mri-bones/joint_reg/data/v2/regressors/lin_regressor_v0.pkl').to(device)
 
     # Set parameters to default values (T pose)
     pose = torch.zeros(1, skel.num_q_params).to(device) # (1, 46)
@@ -24,8 +25,8 @@ if __name__ == '__main__':
     
     # Export meshes    
     os.makedirs('output', exist_ok=True)
-    skin_mesh_path = os.path.join('output', 'skin_mesh.obj')
-    skeleton_mesh_path = os.path.join('output', 'skeleton_mesh.obj')
+    skin_mesh_path = os.path.join('output', f'skin_mesh_{gender}.obj')
+    skeleton_mesh_path = os.path.join('output', f'skeleton_mesh_{gender}.obj')
     
     trimesh.Trimesh(vertices=skel_output.skin_verts.detach().cpu().numpy()[0], 
                     faces=skel.skin_f.cpu()).export(skin_mesh_path)

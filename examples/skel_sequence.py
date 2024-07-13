@@ -42,6 +42,7 @@ if __name__ == "__main__":
                         )   
         to_display.append(smpl_seq)
 
+<<<<<<< HEAD
     skel_seq = SKELSequence.from_file(skel_seq_file = args.skel_file, 
                                      poses_type='skel', 
                                      fps_in=fps_in,
@@ -55,6 +56,16 @@ if __name__ == "__main__":
     if args.export_mesh:
         skel_seq.export_meshes(args.export_mesh)
     
+=======
+    skel_seq = SKELSequence.from_file(skel_seq_file = args.skel_pkl, 
+                                     poses_type='skel', 
+                                     fps_in=fps_in,
+                                     fps_out=fps_out,
+                                     is_rigged=True, 
+                                     show_joint_angles=True, 
+                                     name='SKEL', 
+                                     z_up=args.z_up)
+>>>>>>> joints_opt
     to_display.append(skel_seq)
 
     v = Viewer()
