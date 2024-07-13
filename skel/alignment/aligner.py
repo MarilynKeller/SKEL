@@ -173,7 +173,6 @@ class SkelFitter(object):
             trans_smpl = to_torch(trans_in[i_start:i_end].copy())
             
             # Run a SMPL forward pass to get the SMPL body vertices
-            import ipdb; ipdb.set_trace()
             smpl_output = self.smpl(betas=betas_smpl, body_pose=poses_smpl[:,3:], transl=trans_smpl, global_orient=poses_smpl[:,:3])
             verts = smpl_output.vertices
             if(freevert_mesh is not None):

@@ -243,20 +243,6 @@ class SKEL(nn.Module):
             trans : B x 3 tensor of translation 
             poses_type : str, 'skel', should not be changed
             skelemesh : bool, if True, returns the skeleton vertices. The skeleton mesh is heavy so to fit on GPU memory, set to False when not needed.
-<<<<<<< HEAD
-
-        return SKELOutput class with the following fields:
-            betas: Optional[Tensor] = None
-            body_pose: Optional[Tensor] = None
-            skin_verts: Optional[Tensor] = None
-            skel_verts: Optional[Tensor] = None
-            joints: Optional[Tensor] = None
-            joints_ori: Optional[Tensor] = None
-            betas: Optional[Tensor] = None
-            poses: Optional[Tensor] = None
-            trans : Optional[Tensor] = None
-            pose_offsets : Optional[Tensor] = None
-=======
             dJ : B x 24 x 3 tensor of the offset of the joints location from the anatomical regressor. If None, the offset is set to 0.
             pose_dep_bs : bool, if True (default), applies the pose dependant blend shapes. If False, the pose dependant blend shapes are not applied.
         
@@ -270,7 +256,6 @@ class SKEL(nn.Module):
             trans : Bx3  pose dependant blend shapes offsets 
             pose_offsets : Bx6080x3  pose dependant blend shapes offsets 
             joints_tpose : Bx24x3 3D joints location in T pose 
->>>>>>> joints_opt
         
         In this function we use the following conventions:
         B : batch size
@@ -509,25 +494,15 @@ class SKEL(nn.Module):
             skel_rest_shape_h = torch.cat([skel_v0, torch.ones_like(skel_v0)[:, :, [0]]], dim=-1).expand(B, Nk, -1) # (1,Nk,3)
 
             # compute the bones scaling from the kinematic tree and skin mesh
-<<<<<<< HEAD
-            bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
-                        
-=======
             #with torch.no_grad():
             # TODO: when dJ is optimized the shape of the mesh should be affected by the gradients
             bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
->>>>>>> joints_opt
             # Apply bone meshes scaling:
             skel_v_shaped = torch.cat([(torch.matmul(bone_scale[:,:,0], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 0])[:, :, None], 
                                     (torch.matmul(bone_scale[:,:,1], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 1])[:, :, None],
                                     (torch.matmul(bone_scale[:,:,2], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 2])[:, :, None],
                                     (torch.ones(B, Nk, 1).to(device))
                                     ], dim=-1) 
-<<<<<<< HEAD
-                
-=======
-            # TODO:
->>>>>>> joints_opt
             
             # Align the bones with the proper axis
             Gk01 = build_homog_matrix(Rk01, J.unsqueeze(-1)) # BxJx4x4

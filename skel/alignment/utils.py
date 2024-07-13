@@ -84,7 +84,10 @@ def load_smpl_seq(smpl_seq_path, gender=None, straighten_hands=False):
         data_fixed['trans'] = data_dict['trans']
         
     # Get betas 
-    data_fixed['betas'] = data_dict['betas']
+    betas = data_dict['betas'][..., :10] # Keep only the 10 first betas
+    if len(betas.shape) == 1 and len(poses.shape) == 2:
+        betas = betas[None, :] # Add a batch dimension
+    data_fixed['betas'] = betas
      
     for key in ['trans', 'poses', 'betas', 'gender']:
         assert key in data_fixed.keys(), f'Could not find {key} in {smpl_seq_path}. Available keys: {data_fixed.keys()})'
