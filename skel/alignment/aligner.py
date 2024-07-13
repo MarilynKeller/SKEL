@@ -12,8 +12,8 @@ import argparse
 import math
 import os
 import pickle
-from skel.alignment.losses import compute_pose_loss, compute_scapula_loss, compute_spine_loss, compute_time_loss, pretty_loss_print
-from skel.alignment.utils import to_numpy, to_params, to_torch
+from skel.alignment.losses import compute_anchor_pose, compute_anchor_trans, compute_pose_loss, compute_scapula_loss, compute_spine_loss, compute_time_loss, pretty_loss_print
+from skel.alignment.utils import location_to_spheres, to_numpy, to_params, to_torch
 import torch
 import numpy as np
 from tqdm import trange
@@ -37,11 +37,11 @@ class SkelFitter(object):
         # Instanciate masks used for the vertex to vertex fitting
         fitting_mask_file = 'skel/alignment/riggid_parts_mask.pkl'
         fitting_indices = pickle.load(open(fitting_mask_file, 'rb'))
-        fitting_mask = torch.zeros(6890, dtype=torch.float)
+        fitting_mask = torch.zeros(6890, dtype=torch.bool, device=self.device)
         fitting_mask[fitting_indices] = 1
         self.fitting_mask = fitting_mask.reshape(1, -1, 1).to(self.device) # 1xVx1 to be applied to verts that are BxVx3
         
-        smpl_torso_joints = [0,3,6,9]
+        smpl_torso_joints = [0,3]
         verts_mask = (self.smpl.lbs_weights[:,smpl_torso_joints]>0.5).sum(dim=-1)>0
         self.torso_verts_mask = verts_mask.unsqueeze(0).unsqueeze(-1) # Because verts are of shape BxVx3
         
@@ -49,37 +49,50 @@ class SkelFitter(object):
         
            
         self.cfg = {
+            
+            'use_basic_loss': True,
+            'keepalive_meshviewer': False,
             'lr': 1,
-            'max_iter': 25,
+            'max_iter': 20,
             'num_steps': 10,
-            'line_search_fn': 'None', #'strong_wolfe',
+            'line_search_fn': 'strong_wolfe', #'strong_wolfe',
+            'tolerance_change': 1e-5, #0.01
             'rot_only' : True, # Only optimize the global rotation
+            'mode' : 'root_only', 
 
-
-            'l_verts': 0.1,
-            'l_verts_loose': 0.0,         
-            'l_time_loss': 1e-2,      
+            'l_verts_loose': 0.1,         
+            'l_time_loss': 2e3,      
+            
             'l_joint': 0.0,
+            'l_verts': 0,
             'l_scapula_loss': 0.0,
             'l_spine_loss': 0.0,
             'l_pose_loss': 0.0,
            
 
-            'pose_reg_factor': 1e1
+            'pose_reg_factor': 1e1,
 
         }
         
         self.cfg_optim = {
-            'lr': 1e-1,
-            'max_iter': 10,
+            'lr': 0.1,
+            'max_iter': 20,
             'num_steps': 10,
             'rot_only': False,
+            'tolerance_change': 1e-7, 
+            'mode' : 'fixed_root', 
             
-            'l_verts_loose': 5e2,         
-            'l_joint': 1e2,
-            'l_scapula_loss': 1e-2,
-            'l_spine_loss': 1e-3,
-            'l_pose_loss': 1e-4,
+            'l_verts_loose': 0.1,
+            'l_joint': 1e3,
+            
+            'l_verts': 0,
+            'l_time_loss': 0,#1e-2,              
+            'l_scapula_loss': 0,#1e-1,
+            'l_spine_loss': 0,#1e-3,
+            'l_pose_loss': 0,#1e-4,#1e-4,
+            
+            'l_anch_pose': 0,
+            'l_anch_trans': 0,
            
 
             'pose_reg_factor': 1e1
@@ -170,17 +183,20 @@ class SkelFitter(object):
             betas = to_params(betas_skel[i_start:i_end].copy())
             trans = to_params(trans_skel[i_start:i_end].copy())
             
+            cfg = self.cfg
             if i == 0 and not skel_data_init:
                 # Optimize the global rotation and translation for the initial fitting
-                cfg = self.cfg
                 self.optim([trans,poses], poses, betas, trans, verts, cfg)
+
+                # Fix the pelvis and pose the rest
                 cfg.update(self.cfg_optim)
-                self.optim([trans,poses], poses, betas, trans, verts, cfg)
-            else:
-                cfg = self.cfg
-                cfg.update(self.cfg_optim)
-                self.optim([trans,poses], poses, betas, trans, verts, cfg)
-                
+                self.optim([poses], poses, betas, trans, verts, cfg)
+            
+            # Refine by optimizing the whole body
+            cfg.update(self.cfg_optim)
+            cfg.update({'mode' : 'free', 'tolerance_change': 0.0001, 'l_joint': 0.2e4})
+            self.optim([trans, poses], poses, betas, trans, verts, cfg)
+            
             # Save the result
             poses_skel[i_start:i_end] = poses[:].detach().cpu().numpy().copy()
             trans_skel[i_start:i_end] = trans[:].detach().cpu().numpy().copy()
@@ -227,15 +243,21 @@ class SkelFitter(object):
             dJ=torch.zeros((poses.shape[0], 24, 3), device=betas.device)
             
 
-            # optimizer = torch.optim.LBFGS(params, lr=cfg.lr, max_iter=cfg.max_iter, line_search_fn=cfg.line_search_fn)
-            optimizer = torch.optim.LBFGS(params, lr=cfg.lr, max_iter=cfg.max_iter, tolerance_grad=1e-07, tolerance_change=1e-09, history_size=100)
-
+            optimizer = torch.optim.LBFGS(params, 
+                                          lr=cfg.lr, 
+                                          max_iter=cfg.max_iter, 
+                                          line_search_fn=cfg.line_search_fn,  
+                                          tolerance_change=cfg.tolerance_change)
+            
             pbar = trange(cfg.num_steps, leave=False)
             if('DISABLE_VIEWER' in os.environ):
                 mv = None
                 print("\n DISABLE_VIEWER flag is set, running in headless mode")
             else:
-                mv = MeshViewers((1,2),  keepalive=False)
+                mv = MeshViewers((1,2),  keepalive=cfg.keepalive_meshviewer)
+                
+            poses_init = poses.detach().clone()               
+            trans_init = trans.detach().clone()
 
             def closure():
                 optimizer.zero_grad()
@@ -247,69 +269,39 @@ class SkelFitter(object):
                                             poses_type='skel', 
                                             dJ=dJ[fi:fi+1],
                                             skelmesh=True)
-                    
-                def fstep_plot(output, mv, fi):
-                    if cfg.rot_only:
-                        mask = self.torso_verts_mask
-                    else:
-                        mask = self.fitting_mask 
-                        
-                    skin_err_value = ((output.skin_verts[fi] - verts[fi])**2).sum(dim=-1).sqrt()
-                    skin_err_value = skin_err_value / 0.05
-                    skin_err_value = to_numpy(skin_err_value)
-                        
-                    skin_mesh = Mesh(v=to_numpy(output.skin_verts[fi]), f=[], vc='white')
-                    skel_mesh = Mesh(v=to_numpy(output.skel_verts[fi]), f=self.skel.skel_f.cpu().numpy(), vc='white')
-                    
-                    # Display vertex distance on SMPL
-                    smpl_verts = to_numpy(verts[fi])
-                    smpl_mesh = Mesh(v=smpl_verts, f=self.smpl.faces)
-                    smpl_mesh.set_vertex_colors_from_weights(skin_err_value, scale_to_range_1=False)       
-                    
-                    smpl_mesh_masked = Mesh(v=smpl_verts[to_numpy(mask[0,:,0])], f=[], vc='green')
-                    
-                    # List the meshes to display
-                    meshes_left = [smpl_mesh, skel_mesh]
-                    meshes_right = [smpl_mesh_masked, skin_mesh, skel_mesh]
-                
-                   
-                    # + location_to_spheres(output.joints.detach().cpu().numpy()[frame_to_watch], color=(1,0,0), radius=0.02)
-                    # + [Mesh(v=verts[frame_to_watch].detach().cpu().numpy(), f=smpl_data.faces, vc='green')] \
-                    # + location_to_spheres(joints_reg[frame_to_watch].detach().cpu().numpy(), color=(0,1,0), radius=0.02) \
-                    if('DISABLE_VIEWER' not in os.environ):
-                        mv[0][0].set_dynamic_meshes(meshes_left)
-                        mv[0][1].set_dynamic_meshes(meshes_right)
-                
-                    # print(poses[frame_to_watch, :3])
-                    # print(trans[frame_to_watch])
-                    # print(betas[frame_to_watch, :3])
-                    # mv.get_keypress()
             
-                fstep_plot(output, mv, fi)
+                self.fstep_plot(output, mv, fi, cfg, verts, anat_joints)
                     
-                loss = self.fitting_loss(poses,
+
+           
+                loss_dict = self.fitting_loss(poses,
+                                        poses_init,
                                         betas,
                                         trans,
+                                        trans_init,
                                         dJ,
                                         anat_joints,
                                         verts,
                                         cfg)
-                                        
+                
+                print(pretty_loss_print(loss_dict))
+                             
+                loss = sum(loss_dict.values())                     
                 loss.backward()
             
                 return loss
 
 
-            for step_i in pbar:
+            for step_i in range(cfg.num_steps):
                 loss = optimizer.step(closure).item()
-                # with torch.no_grad():
-                #     poses[:] = torch.atan2(poses.sin(), poses.cos())
-                pbar.set_postfix_str(f"Loss {loss:.4f}")
+
             
     def fitting_loss(self,
                     poses,
+                    poses_init,
                     betas,
                     trans,
+                    trans_init,
                     dJ,
                     anat_joints,
                     verts,
@@ -317,46 +309,107 @@ class SkelFitter(object):
         
         loss_dict = {}
         
-        if cfg.rot_only:
+        pose_mask = torch.ones_like(poses).to(self.device)
+        verts_mask = torch.ones_like(self.fitting_mask )
+        joint_mask = torch.ones_like(anat_joints)
+        
+        # Mask vertices 
+        if cfg.mode=='root_only':
             # Only optimize the global rotation of the body, i.e. the first 3 angles of the pose
-            joint_mask = torch.zeros_like(poses).to(self.device)
-            joint_mask[:,:3] = 1
-            poses_in = poses * joint_mask
-            
+            pose_mask[:] = 0
+            pose_mask[:,:3] = 1
+            poses_in = poses * pose_mask
             # Only fit the thorax vertices to recover the proper body orientation and translation
-            verts_mask = self.torso_verts_mask
+            verts_mask = self.torso_verts_mask  
+        elif cfg.mode=='fixed_root': 
+            pose_mask[:] = 1           
+            pose_mask[:,:3] = 0    
+            pose_mask[:,19] = 0  #block the lumbar twist    
+            poses_in = poses * pose_mask + poses_init * (1-pose_mask)
         else:
-            poses_in = poses
             verts_mask = torch.ones_like(self.fitting_mask )
-    
-        output = self.skel.forward(poses=poses_in, betas=betas, trans=trans, poses_type='skel', dJ=dJ, skelmesh=False)
+            poses_in = poses
+            joint_mask[:]=0
+            joint_mask[:, [19,14], :] = 1 # Only optimize the elbow and knee joints
+            
+            
+        poses = poses_in
+
+        # Mask joints to not optimize before computing the losses 
+        
+        output = self.skel.forward(poses=poses, betas=betas, trans=trans, poses_type='skel', dJ=dJ, skelmesh=False)
+        
         
         # Fit the SMPL vertices
         # We know the skinning of the forearm and the neck are not perfect,
         # so we create a mask of the SMPL vertices that are important to fit, like the hands and the head
-        loss_dict['verts_loss'] = cfg.l_verts * (verts_mask * self.fitting_mask * (output.skin_verts - verts)**2).sum() / (self.fitting_mask*verts_mask).sum()
-        # loss_dict['verts_loss'] = cfg.l_verts * F.mse_loss(output.skin_verts, verts)
-        loss_dict['verts_loss_loose'] = cfg.l_verts_loose * F.mse_loss(output.skin_verts, verts)
-        
-        # Fit the regressed joints
-        loss_dict['joint_loss'] = cfg.l_joint * F.mse_loss(output.joints, anat_joints)
-        
+        loss_dict['verts_loss_loose'] = cfg.l_verts_loose * (verts_mask  * (output.skin_verts - verts)**2).sum() / (verts_mask).sum()
+
+        # Fit the regressed joints, this avoids collapsing shoulders
+        # loss_dict['joint_loss'] = cfg.l_joint * F.mse_loss(output.joints, anat_joints)
+        loss_dict['joint_loss'] = cfg.l_joint * (joint_mask * (output.joints - anat_joints)**2).mean()
+    
         # Time consistancy
         if poses.shape[0] > 1:
+            # This avoids unstable hips orientationZ
             loss_dict['time_loss'] = cfg.l_time_loss * F.mse_loss(poses[1:], poses[:-1])
-            
-        # Regularize the pose
-        loss_dict['scapula_loss'] = cfg.l_scapula_loss * compute_scapula_loss(poses_in)
-        loss_dict['spine_loss'] = cfg.l_spine_loss * compute_spine_loss(poses_in)
-        loss_dict['pose_loss'] = cfg.l_pose_loss * compute_pose_loss(poses)
         
-        # Adjust the losses of all the pose regularizations sub losses with the pose_reg_factor value
-        for key in ['scapula_loss', 'spine_loss', 'pose_loss']:
-            loss_dict[key] = cfg.pose_reg_factor * loss_dict[key]
-        
-        loss = sum(loss_dict.values())
-        print(pretty_loss_print(loss, loss_dict))
+        if cfg.use_basic_loss is False:
+            # These losses can be used to regularize the optimization but are not always necessary
+            loss_dict['anch_rot'] = cfg.l_anch_pose * compute_anchor_pose(poses, poses_init)
+            loss_dict['anch_trans'] = cfg.l_anch_trans * compute_anchor_trans(trans, trans_init)
                 
-        return loss
+            loss_dict['verts_loss'] = cfg.l_verts * (verts_mask * self.fitting_mask * (output.skin_verts - verts)**2).sum() / (self.fitting_mask*verts_mask).sum()
+            
+            
+                
+            # Regularize the pose
+            loss_dict['scapula_loss'] = cfg.l_scapula_loss * compute_scapula_loss(poses_in)
+            loss_dict['spine_loss'] = cfg.l_spine_loss * compute_spine_loss(poses_in)
+            loss_dict['pose_loss'] = cfg.l_pose_loss * compute_pose_loss(poses, poses_init)
+            
+            # Adjust the losses of all the pose regularizations sub losses with the pose_reg_factor value
+            for key in ['scapula_loss', 'spine_loss', 'pose_loss']:
+                loss_dict[key] = cfg.pose_reg_factor * loss_dict[key]
+                
+        return loss_dict
 
+    def fstep_plot(self, output, mv, fi, cfg, verts, anat_joints):
+        "Function to plot each step"
+        if cfg.rot_only:
+            mask = self.torso_verts_mask
+        else:
+            # mask = self.fitting_mask 
+            mask = torch.ones_like(self.fitting_mask)
+            
+        skin_err_value = ((output.skin_verts[fi] - verts[fi])**2).sum(dim=-1).sqrt()
+        skin_err_value = skin_err_value / 0.05
+        skin_err_value = to_numpy(skin_err_value)
+            
+        skin_mesh = Mesh(v=to_numpy(output.skin_verts[fi]), f=[], vc='white')
+        skel_mesh = Mesh(v=to_numpy(output.skel_verts[fi]), f=self.skel.skel_f.cpu().numpy(), vc='white')
         
+        # Display vertex distance on SMPL
+        smpl_verts = to_numpy(verts[fi])
+        smpl_mesh = Mesh(v=smpl_verts, f=self.smpl.faces)
+        smpl_mesh.set_vertex_colors_from_weights(skin_err_value, scale_to_range_1=False)       
+        
+        smpl_mesh_masked = Mesh(v=smpl_verts[to_numpy(mask[0,:,0])], f=[], vc='green')
+        
+        # List the meshes to display
+        meshes_left = [smpl_mesh, skel_mesh]
+        meshes_right = [smpl_mesh_masked, skin_mesh, skel_mesh]
+
+        if cfg.l_joint > 0:
+            # Plot the joints
+            meshes_right += location_to_spheres(output.joints.detach().cpu().numpy()[fi], color=(1,0,0), radius=0.02)
+            meshes_right += location_to_spheres(anat_joints[fi].detach().cpu().numpy(), color=(0,1,0), radius=0.02) \
+                
+        if('DISABLE_VIEWER' not in os.environ):
+            mv[0][0].set_dynamic_meshes(meshes_left)
+            mv[0][1].set_dynamic_meshes(meshes_right)
+
+        # print(poses[frame_to_watch, :3])
+        # print(trans[frame_to_watch])
+        # print(betas[frame_to_watch, :3])
+        # mv.get_keypress()

@@ -148,7 +148,13 @@ python examples/align_to_SMPL_frame.py --smpl_data 'examples/samples/img_fit/emi
 SKEL can be aligned to SMPL sequences, here is an example:
 
 ```shell
-python examples/align_to_SMPL_seq.py examples/amass_seq/CMU_01_01.npz -D -w 1000  
+python examples/align_to_SMPL_seq.py examples/samples/amass_seq/CMU_01_01.npz -D 
+```
+
+You can visualize the result with:
+
+```shell
+python examples/skel_sequence.py output/CMU_01_01/CMU_01_01_skel.pkl -z 
 ```
 
 You can download more SMPL sequences of this kind from the [AMASS](https://amass.is.tue.mpg.de/) Download page, and selecting the `SMPL+H G` sequences.

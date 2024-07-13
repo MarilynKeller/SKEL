@@ -40,7 +40,7 @@ if __name__ == "__main__":
                         )   
         to_display.append(smpl_seq)
 
-    skel_seq = SKELSequence.from_pkl(skel_seq_pkl = args.skel_pkl, 
+    skel_seq = SKELSequence.from_file(skel_seq_file = args.skel_pkl, 
                                      poses_type='skel', 
                                      fps_in=fps_in,
                                      fps_out=fps_out,

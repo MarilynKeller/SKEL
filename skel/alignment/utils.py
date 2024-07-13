@@ -3,7 +3,7 @@ import os
 import pickle
 import torch
 import numpy as np
-
+from psbody.mesh.sphere import Sphere
 
 # to_params = lambda x: torch.from_numpy(x).float().to(self.device).requires_grad_(True)
 # to_torch = lambda x: torch.from_numpy(x).float().to(self.device)
@@ -97,3 +97,20 @@ def load_smpl_seq(smpl_seq_path, gender=None, straighten_hands=False):
     
     return out_dict
         
+        
+def location_to_spheres(loc, color=(1,0,0), radius=0.02):
+    """Given an array of 3D points, return a list of spheres located at those positions.
+
+    Args:
+        loc (numpy.array): Nx3 array giving 3D positions
+        color (tuple, optional): One RGB float color vector to color the spheres. Defaults to (1,0,0).
+        radius (float, optional): Radius of the spheres in meters. Defaults to 0.02.
+
+    Returns:
+        list: List of spheres Mesh
+    """
+
+    cL = [Sphere(np.asarray([loc[i, 0], loc[i, 1], loc[i, 2]]), radius).to_mesh() for i in range(loc.shape[0])]
+    for spL in cL:
+        spL.set_vertex_colors(np.array(color)) 
+    return cL
