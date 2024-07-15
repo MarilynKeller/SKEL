@@ -17,8 +17,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out_dir', type=str, help='Output directory', default='output')
     parser.add_argument('-F', '--force-recompute', help='Force recomputation of the alignment', action='store_true')
     parser.add_argument('-D', '--debug', help='Only run the fit on the first minibach to test', action='store_true')
-    parser.add_argument('-B', '--batch-size', type=int, help='Batch size', default=3000)
-    parser.add_argument('-w', '--watch-frame', type=int, help='Frame of the batch to display', default=0)
+    parser.add_argument('-B', '--batch_size', type=int, help='Batch size', default=3000)
+    parser.add_argument('-w', '--watch_frame', type=int, help='Frame of the batch to display', default=0)
     parser.add_argument('-m', '--export_meshes', choices=[None, 'mesh', 'pickle'], default=None, 
                         help='If not None, export the resulting meshes (skin and skeleton), either as .obj' \
                             +'files or as a pickle file containing the vertices and faces')

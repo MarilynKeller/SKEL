@@ -23,7 +23,8 @@ if __name__ == "__main__":
         This is usefull for vizualizing sequences of AMASS that are 90 degree rotated', action='store_true')
     parser.add_argument('-g', '--gender', type=str, default=None, help='Forces the gender for visualization. By default, the code tries to load the gender from the skel file')
     parser.add_argument('-e', '--export_mesh', type=str, help='Export the mesh of the skel model to this folder', default=None)
-
+    parser.add_argument('--offset', help='Offset the SMPL model to display it beside SKEL.', action='store_true') 
+                        
     args = parser.parse_args()
     
     to_display = []
@@ -32,15 +33,21 @@ if __name__ == "__main__":
     fps_out = 30 # Fps at which the sequence will be played back
     # The skeleton mesh has a lot of vertices, so we don't load all the frames to avoid memory issues
     if args.smpl_seq is not None:
-        smpl_seq = SMPLSequence.from_smpl_data(
+        if args.offset:
+            translation = np.array([-1.0, 0.0, 0.0])
+        else:
+            translation = None
+            
+        smpl_seq = SMPLSequence.from_amass(
                         npz_data_path=args.smpl_seq,
                         fps_out=fps_out,
                         name="SMPL",
                         show_joint_angles=True,
-                        position=np.array([-1.0, 0.0, 0.0]),
+                        position=translation,
                         z_up=args.z_up
                         )   
         to_display.append(smpl_seq)
+        
 
     skel_seq = SKELSequence.from_file(skel_seq_file = args.skel_file, 
                                      poses_type='skel', 
