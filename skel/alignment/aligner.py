@@ -209,11 +209,8 @@ class SkelFitter(object):
             self._optim([trans,poses], poses, betas, trans, verts, current_cfg)
 
         for ci, cfg in enumerate(config[1:]):
-            # import ipdb; ipdb.set_trace()
+        # for ci, cfg in enumerate([config[-1]]): # To debug, only run the last step
             current_cfg.update(cfg)
-            # for key, val in cfg.items():
-            #     current_cfg[key]=val
-            # import ipdb; ipdb.set_trace()
             print(f'Step {ci+1}: {current_cfg.description}')
             self._optim([poses], poses, betas, trans, verts, current_cfg)
         
@@ -311,19 +308,22 @@ class SkelFitter(object):
         elif cfg.mode=='fixed_root': 
             pose_mask[:] = 1           
             pose_mask[:,:3] = 0  # Block the global rotation
-            pose_mask[:,19] = 0  # block the lumbar twist    
+            # pose_mask[:,19] = 0  # block the lumbar twist    
             
-            
-             
-        else:
-            verts_mask = torch.ones_like(self.fitting_mask )
             # The orientation of the upper limbs is often wrong in SMPL so ignore these vertices for the finale step
             upper_limbs_joints = [1,2,16,17] 
-            verts_mask = (self.smpl.lbs_weights[:,upper_limbs_joints]<0.5).sum(dim=-1)>0
+            verts_mask = (self.smpl.lbs_weights[:,upper_limbs_joints]>0.5).sum(dim=-1)>0
+            verts_mask = torch.logical_not(verts_mask)
             verts_mask = verts_mask.unsqueeze(0).unsqueeze(-1)
+                         
+        elif cfg.mode=='free': 
+            verts_mask = torch.ones_like(self.fitting_mask )
 
             joint_mask[:]=0
             joint_mask[:, [19,14], :] = 1 # Only fir the scapula join to avoid collapsing shoulders
+            
+        else:
+            raise ValueError(f'Unknown mode {cfg.mode}')
             
         return pose_mask, verts_mask, joint_mask
             
