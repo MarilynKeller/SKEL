@@ -57,9 +57,9 @@ if __name__ == '__main__':
     SKEL_skel_mesh = trimesh.Trimesh(vertices=skel_seq['skel_v'][0], faces=skel_seq['skel_f'])
     SMPL_mesh = trimesh.Trimesh(vertices=skel_seq['smpl_v'][0], faces=skel_seq['smpl_f'])
     
-    SKEL_skin_mesh.export(os.path.join(args.out_dir, subj_name + '_skin.obj'))
-    SKEL_skel_mesh.export(os.path.join(args.out_dir, subj_name + '_skel.obj'))
-    SMPL_mesh.export(os.path.join(args.out_dir, subj_name + '_smpl.obj'))
+    SKEL_skin_mesh.export(os.path.join(subj_dir, subj_name + '_skin.obj'))
+    SKEL_skel_mesh.export(os.path.join(subj_dir, subj_name + '_skel.obj'))
+    SMPL_mesh.export(os.path.join(subj_dir, subj_name + '_smpl.obj'))
     
     pickle.dump(skel_seq, open(pkl_path, 'wb'))
     

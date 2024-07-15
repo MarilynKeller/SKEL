@@ -60,7 +60,7 @@ class SkelFitter(object):
             'rot_only' : True, # Only optimize the global rotation
             'mode' : 'root_only', 
 
-            'l_verts_loose': 0.1,         
+            'l_verts_loose': 300,         
             'l_time_loss': 2e3,      
             
             'l_joint': 0.0,
@@ -343,7 +343,7 @@ class SkelFitter(object):
         # Fit the SMPL vertices
         # We know the skinning of the forearm and the neck are not perfect,
         # so we create a mask of the SMPL vertices that are important to fit, like the hands and the head
-        loss_dict['verts_loss_loose'] = cfg.l_verts_loose * (verts_mask  * (output.skin_verts - verts)**2).sum() / (verts_mask).sum()
+        loss_dict['verts_loss_loose'] = cfg.l_verts_loose * (verts_mask  * (output.skin_verts - verts)**2).sum() / (((verts_mask).sum()*self.nb_frames))
 
         # Fit the regressed joints, this avoids collapsing shoulders
         # loss_dict['joint_loss'] = cfg.l_joint * F.mse_loss(output.joints, anat_joints)
@@ -353,6 +353,8 @@ class SkelFitter(object):
         if poses.shape[0] > 1:
             # This avoids unstable hips orientationZ
             loss_dict['time_loss'] = cfg.l_time_loss * F.mse_loss(poses[1:], poses[:-1])
+        
+        loss_dict['pose_loss'] = cfg.l_pose_loss * compute_pose_loss(poses, poses_init)
         
         if cfg.use_basic_loss is False:
             # These losses can be used to regularize the optimization but are not always necessary
@@ -366,7 +368,6 @@ class SkelFitter(object):
             # Regularize the pose
             loss_dict['scapula_loss'] = cfg.l_scapula_loss * compute_scapula_loss(poses_in)
             loss_dict['spine_loss'] = cfg.l_spine_loss * compute_spine_loss(poses_in)
-            loss_dict['pose_loss'] = cfg.l_pose_loss * compute_pose_loss(poses, poses_init)
             
             # Adjust the losses of all the pose regularizations sub losses with the pose_reg_factor value
             for key in ['scapula_loss', 'spine_loss', 'pose_loss']:
@@ -395,9 +396,12 @@ class SkelFitter(object):
         smpl_mesh.set_vertex_colors_from_weights(skin_err_value, scale_to_range_1=False)       
         
         smpl_mesh_masked = Mesh(v=smpl_verts[to_numpy(mask[0,:,0])], f=[], vc='green')
+        smpl_mesh_pc = Mesh(v=smpl_verts, f=[], vc='green')
         
+        skin_mesh_err = Mesh(v=to_numpy(output.skin_verts[fi]), f=self.skel.skin_f.cpu().numpy(), vc='white')
+        skin_mesh_err.set_vertex_colors_from_weights(skin_err_value, scale_to_range_1=False) 
         # List the meshes to display
-        meshes_left = [smpl_mesh, skel_mesh]
+        meshes_left = [skin_mesh_err, smpl_mesh_pc]
         meshes_right = [smpl_mesh_masked, skin_mesh, skel_mesh]
 
         if cfg.l_joint > 0:
