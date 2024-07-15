@@ -9,7 +9,7 @@ from psbody.mesh.sphere import Sphere
 # to_torch = lambda x: torch.from_numpy(x).float().to(self.device)
 
 def to_params(x, device):
-    return torch.from_numpy(x).float().to(device).requires_grad_(True)
+    return x.to(device).requires_grad_(True)
 
 def to_torch(x, device):
     return torch.from_numpy(x).float().to(device)
