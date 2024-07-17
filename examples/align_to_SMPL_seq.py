@@ -19,13 +19,17 @@ if __name__ == '__main__':
     parser.add_argument('-D', '--debug', help='Only run the fit on the first minibach to test', action='store_true')
     parser.add_argument('-B', '--batch_size', type=int, help='Batch size', default=3000)
     parser.add_argument('-w', '--watch_frame', type=int, help='Frame of the batch to display', default=0)
+    parser.add_argument('--gender', type=str, help='Gender of the subject (only needed if not provided with smpl_data_path)', default='female')
     parser.add_argument('-m', '--export_meshes', choices=[None, 'mesh', 'pickle'], default=None, 
                         help='If not None, export the resulting meshes (skin and skeleton), either as .obj' \
                             +'files or as a pickle file containing the vertices and faces')
+    parser.add_argument('--config', help='Yaml config file containing parameters for training. \
+                    You can create a config tailored to align a specific sequence. When left to None, \
+                        the default config will be used', default=None)
     
     args = parser.parse_args()
     
-    smpl_seq = load_smpl_seq(args.smpl_seq_path, straighten_hands=False)
+    smpl_seq = load_smpl_seq(args.smpl_seq_path, gender=args.gender, straighten_hands=False)
     
     # Create the output directory
     subj_name = os.path.basename(args.smpl_seq_path).split(".")[0]
@@ -40,7 +44,10 @@ if __name__ == '__main__':
     else:
         skel_data_init = None
     
-    skel_fitter = SkelFitter(smpl_seq['gender'], device='cuda:0', export_meshes=args.export_meshes is not None)
+    skel_fitter = SkelFitter(smpl_seq['gender'], 
+                             device='cuda:0', 
+                             export_meshes=args.export_meshes is not None,
+                             config_path=args.config)
     skel_seq = skel_fitter.run_fit(smpl_seq['trans'], 
                                smpl_seq['betas'], 
                                smpl_seq['poses'], 

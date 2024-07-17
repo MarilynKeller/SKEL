@@ -18,6 +18,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out_dir', type=str, help='Output directory', default='output')
     parser.add_argument('-F', '--force-recompute', help='Force recomputation of the alignment', action='store_true')
     parser.add_argument('--gender', type=str, help='Gender of the subject (only needed if not provided with smpl_data_path)', default='female')
+    parser.add_argument('--config', help='Yaml config file containing parameters for training. \
+                    You can create a config tailored to align a specific sequence. When left to None, \
+                        the default config will be used', default=None)
     
     args = parser.parse_args()
 
@@ -43,7 +46,10 @@ if __name__ == '__main__':
     else:
         skel_data_init = None
     
-    skel_fitter = SkelFitter(smpl_data['gender'], device='cuda:0', export_meshes=True)
+    skel_fitter = SkelFitter(smpl_data['gender'], 
+                             device='cuda:0', 
+                             export_meshes=True, 
+                             config_path=args.config)
     skel_seq = skel_fitter.run_fit(smpl_data['trans'], 
                                smpl_data['betas'], 
                                smpl_data['poses'],

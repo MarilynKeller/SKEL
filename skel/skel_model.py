@@ -17,7 +17,7 @@ from typing import NewType, Optional
 
 from skel.joints_def import curve_torch_3d, left_scapula, right_scapula
 from skel.osim_rot import ConstantCurvatureJoint, CustomJoint, EllipsoidJoint, PinJoint, WalkerKnee
-from skel.utils import build_homog_matrix, rotation_matrix_from_vectors, with_zeros, matmul_chain
+from skel.utils import build_homog_matrix, rotation_matrix_from_vectors, sparce_coo_matrix2tensor, with_zeros, matmul_chain
 from dataclasses import dataclass, fields
 
 from skel.kin_skel import scaling_keypoints, pose_param_names, smpl_joint_corresp
@@ -98,7 +98,6 @@ class SKEL(nn.Module):
         self.num_joints = skel_data['J_regressor_osim'].shape[0]
         self.num_joints_smpl = skel_data['J_regressor'].shape[0]
         
-        self.bone_axis = skel_data['bone_axis'] 
         self.joints_name = skel_data['joints_name']
         self.pose_params_name = skel_data['pose_params_name']
         
@@ -114,7 +113,7 @@ class SKEL(nn.Module):
         self.register_buffer('posedirs', torch.FloatTensor(np.array(skel_data['posedirs'])))
         
         # Model sparse joints regressor, regresses joints location from a mesh
-        self.register_buffer('J_regressor', torch.FloatTensor(skel_data['J_regressor']))
+        self.register_buffer('J_regressor', sparce_coo_matrix2tensor(skel_data['J_regressor']))
         
         # Regress the anatomical joint location with a regressor learned from BioAmass
         if custom_joint_reg_path is not None:
@@ -122,21 +121,19 @@ class SKEL(nn.Module):
             self.register_buffer('J_regressor_osim', torch.FloatTensor(J_regressor_skel))  
             print('WARNING: Using custom joint regressor')
         else:
-            self.register_buffer('J_regressor_osim', torch.FloatTensor(skel_data['J_regressor_osim']))   
-        self.register_buffer('joint_sockets', torch.FloatTensor(skel_data['joint_sockets']))
+            self.register_buffer('J_regressor_osim', sparce_coo_matrix2tensor(skel_data['J_regressor_osim'], make_dense=True))   
         
         self.register_buffer('per_joint_rot', torch.FloatTensor(skel_data['per_joint_rot']))
         
         # Skin model skinning weights
-        self.register_buffer('weights', torch.FloatTensor(skel_data['weights']))
+        self.register_buffer('smpl_weights', sparce_coo_matrix2tensor(skel_data['smpl_weights']))
 
         # Skeleton model skinning weights
-        self.register_buffer('skel_weights', torch.FloatTensor(skel_data['skel_weights']))        
-        self.register_buffer('skel_weights_rigid', torch.FloatTensor(skel_data['skel_weights_rigid']))        
+        self.register_buffer('skel_weights', sparce_coo_matrix2tensor(skel_data['skel_weights']))        
+        self.register_buffer('skel_weights_rigid', sparce_coo_matrix2tensor(skel_data['skel_weights_rigid']))        
         
         # Kinematic tree of the model
         self.register_buffer('kintree_table', torch.from_numpy(skel_data['osim_kintree_table'].astype(np.int64)))
-        # self.register_buffer('osim_kintree_table', torch.from_numpy(skel_data['osim_kintree_table'].astype(np.int64)))
         self.register_buffer('parameter_mapping', torch.from_numpy(skel_data['parameter_mapping'].astype(np.int64)))
         
         # transformation from osim can pose to T pose
@@ -461,7 +458,7 @@ class SKEL(nn.Module):
         Gskin = G - rest
         
         # Compute per vertex transformation matrix (after weighting)
-        T = torch.matmul(self.weights, Gskin.permute(1, 0, 2, 3).contiguous().view(Nj, -1)).view(Ns, B, 4,4).transpose(0, 1)
+        T = torch.matmul(self.smpl_weights, Gskin.permute(1, 0, 2, 3).contiguous().view(Nj, -1)).view(Ns, B, 4,4).transpose(0, 1)
         rest_shape_h = torch.cat([v_shaped_pd, torch.ones_like(v_shaped_pd)[:, :, [0]]], dim=-1)
         v_posed = torch.matmul(T, rest_shape_h[:, :, :, None])[:, :, :3, 0]
         

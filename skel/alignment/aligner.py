@@ -21,11 +21,10 @@ from psbody.mesh import Mesh, MeshViewer, MeshViewers
 import skel.config as cg
 from skel.skel_model import SKEL
 import omegaconf 
-from skel.alignment.align_config import config
 
 class SkelFitter(object):
     
-    def __init__(self, gender, device, num_betas=10, export_meshes=False) -> None:
+    def __init__(self, gender, device, num_betas=10, export_meshes=False, config_path=None) -> None:
 
         self.smpl = smplx.create(cg.smpl_folder, model_type='smpl', gender=gender, num_betas=num_betas, batch_size=1, export_meshes=False).to(device)
         self.skel = SKEL(gender).to(device)
@@ -45,10 +44,12 @@ class SkelFitter(object):
         self.torso_verts_mask = verts_mask.unsqueeze(0).unsqueeze(-1) # Because verts are of shape BxVx3
         
         self.export_meshes = export_meshes
-        
 
-        # make the cfg being an object using omegaconf   
-        self.cfg =  omegaconf.OmegaConf.create(config)
+        if config_path is None:
+            package_directory = os.path.dirname(os.path.abspath(__file__))
+            config_path = os.path.join(package_directory, 'config.yaml')
+            
+        self.cfg =  omegaconf.OmegaConf.load(config_path)
            
         # Instanciate the mesh viewer to visualize the fitting
         if('DISABLE_VIEWER' in os.environ):
@@ -407,7 +408,7 @@ class SkelFitter(object):
         skin_mesh_err = Mesh(v=to_numpy(output.skin_verts[0]), f=self.skel.skin_f.cpu().numpy(), vc='white')
         skin_mesh_err.set_vertex_colors_from_weights(skin_err_value, scale_to_range_1=False) 
         # List the meshes to display
-        meshes_left = [skin_mesh_err, smpl_mesh_pc]
+        meshes_left = [skin_mesh_err, smpl_mesh_pc, skel_mesh]
         meshes_right = [smpl_mesh_masked, skin_mesh, skel_mesh]
 
         if cfg.l_joint > 0:

@@ -19,10 +19,9 @@
 # Code Developed by:
 # Ahmed A. A. Osman, edited by Marilyn Keller
 
+import scipy
 import torch
-
-
-
+import numpy as np
 
 def build_homog_matrix(R, t=None):
     """ Create a homogeneous matrix from rotation matrix and translation vector
@@ -430,3 +429,22 @@ def location_to_spheres(loc, color=(1,0,0), radius=0.02):
     for spL in cL:
         spL.set_vertex_colors(np.array(color)) 
     return cL
+
+def sparce_coo_matrix2tensor(arr_coo, make_dense=False):
+    assert isinstance(arr_coo, scipy.sparse._coo.coo_matrix), f"arr_coo should be a coo_matrix, got {type(arr_coo)}. Please download the updated SKEL pkl files from https://skel.is.tue.mpg.de/."
+
+    values = arr_coo.data
+    indices = np.vstack((arr_coo.row, arr_coo.col))
+
+    i = torch.LongTensor(indices)
+    v = torch.FloatTensor(values)
+    shape = arr_coo.shape
+
+    tensor_arr = torch.sparse.FloatTensor(i, v, torch.Size(shape))
+    
+    if make_dense:
+        tensor_arr = tensor_arr.to_dense()
+        
+    return tensor_arr
+        
+    

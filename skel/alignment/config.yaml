@@ -1,0 +1,50 @@
+# Optimization config file. In 'optim_steps' we define each optimization steps. 
+# Each step inherit and overwrite the parameters of the previous step."""
+
+keepalive_meshviewer: false
+optim_steps:
+  - description: Adjust the root orientation and translation
+    use_basic_loss: true
+    lr: 1
+    max_iter: 20
+    num_steps: 10
+    line_search_fn: strong_wolfe
+    tolerance_change: 0.0001
+    mode: root_only
+    l_verts_loose: 300
+    l_time_loss: 500
+    l_joint: 0.0
+    l_verts: 0
+    l_scapula_loss: 0.0
+    l_spine_loss: 0.0
+    l_pose_loss: 0.0
+  - description: Adjust the upper limbs pose
+    lr: 0.1
+    max_iter: 20
+    num_steps: 10
+    tolerance_change: 1e-7
+    mode: fixed_upper_limbs
+    l_verts_loose: 600
+    l_joint: 1000
+    l_time_loss: 2000
+    l_pose_loss: 0.0001
+  - description: Adjust the whole body pose with fixed root
+    lr: 0.1
+    max_iter: 20
+    num_steps: 10
+    tolerance_change: 1e-7
+    mode: fixed_root
+    l_verts_loose: 600
+    l_joint: 1000
+    l_time_loss: 2000
+    l_pose_loss: 0.0001
+  - description: Free optimization
+    lr: 0.1
+    max_iter: 20
+    num_steps: 10
+    tolerance_change: 1e-7
+    mode: free
+    l_verts_loose: 600
+    l_joint: 1000
+    l_time_loss: 2000
+    l_pose_loss: 0.0001
