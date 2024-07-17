@@ -91,6 +91,9 @@ class SKEL(nn.Module):
         assert os.path.exists(skel_file), f"Skel model file {skel_file} does not exist"
         
         skel_data = pkl.load(open(skel_file, 'rb'))
+        
+        if 'weights' in skel_data:
+            raise RuntimeError('This version of skel.pkl is deprecated, please download the latest version from https://skel.is.tue.mpg.de/download.html')
 
         self.num_betas = 10
         self.num_q_params = 46
@@ -126,7 +129,7 @@ class SKEL(nn.Module):
         self.register_buffer('per_joint_rot', torch.FloatTensor(skel_data['per_joint_rot']))
         
         # Skin model skinning weights
-        self.register_buffer('smpl_weights', sparce_coo_matrix2tensor(skel_data['smpl_weights']))
+        self.register_buffer('skin_weights', sparce_coo_matrix2tensor(skel_data['smpl_weights']))
 
         # Skeleton model skinning weights
         self.register_buffer('skel_weights', sparce_coo_matrix2tensor(skel_data['skel_weights']))        
@@ -458,7 +461,7 @@ class SKEL(nn.Module):
         Gskin = G - rest
         
         # Compute per vertex transformation matrix (after weighting)
-        T = torch.matmul(self.smpl_weights, Gskin.permute(1, 0, 2, 3).contiguous().view(Nj, -1)).view(Ns, B, 4,4).transpose(0, 1)
+        T = torch.matmul(self.skin_weights, Gskin.permute(1, 0, 2, 3).contiguous().view(Nj, -1)).view(Ns, B, 4,4).transpose(0, 1)
         rest_shape_h = torch.cat([v_shaped_pd, torch.ones_like(v_shaped_pd)[:, :, [0]]], dim=-1)
         v_posed = torch.matmul(T, rest_shape_h[:, :, :, None])[:, :, :3, 0]
         
