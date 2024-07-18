@@ -71,7 +71,7 @@ def optim(params,
             joint_loss = 1e4 * ((output.joints - target_joints)*target_joints_mask).pow(2).mean()
             
             # Regularize the pose so that it stays close to the initial T pose
-            pose_loss = 1e-1*compute_pose_loss(poses)    
+            pose_loss = 1e-1*compute_pose_loss(poses, torch.zeros_like(poses))    
             
             scapula_loss = 1e2 * compute_scapula_loss(poses_in)     
         
