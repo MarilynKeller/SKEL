@@ -92,8 +92,10 @@ class SKEL(nn.Module):
         
         skel_data = pkl.load(open(skel_file, 'rb'))
         
-        if 'weights' in skel_data:
-            raise RuntimeError('This version of skel.pkl is deprecated, please download the latest version from https://skel.is.tue.mpg.de/download.html')
+        # Check that the version of the skel model is compatible with this loader
+        assert 'version' in skel_data, f"Expected version 1.1.1 of the SKEL picke. Please download the latest skel pkl versions from https://skel.is.tue.mpg.de/download.html"
+        version = skel_data['version']
+        assert version == '1.1.1', f"Expected version 1.1.1, got {version}. Please download the latest skel pkl versions from https://skel.is.tue.mpg.de/download.html"
 
         self.num_betas = 10
         self.num_q_params = 46
@@ -129,7 +131,7 @@ class SKEL(nn.Module):
         self.register_buffer('per_joint_rot', torch.FloatTensor(skel_data['per_joint_rot']))
         
         # Skin model skinning weights
-        self.register_buffer('skin_weights', sparce_coo_matrix2tensor(skel_data['smpl_weights']))
+        self.register_buffer('skin_weights', sparce_coo_matrix2tensor(skel_data['skin_weights']))
 
         # Skeleton model skinning weights
         self.register_buffer('skel_weights', sparce_coo_matrix2tensor(skel_data['skel_weights']))        
@@ -287,7 +289,7 @@ class SKEL(nn.Module):
         skel_v0 = self.skel_template_v[None, :]
         betas = betas[:, :, None] # TODO Name the expanded beta differently
         
-        # TODO
+        # TODO clean this part
         assert poses_type in ['skel', 'bsm'], f"got {poses_type}"
         if poses_type == 'bsm':
             assert poses.shape[1] == self.num_q_params - 3, f'With poses_type bsm, expected parameters of shape (B, {self.num_q_params - 3}, got {poses.shape}'
@@ -437,10 +439,10 @@ class SKEL(nn.Module):
             
             # We need the per SMPL joint bone transform to compute pose dependant blend shapes.
             # Initialize each joint rotation with identity
-            Rsmpl = ident.unsqueeze(0).unsqueeze(0).expand(B, self.num_joints_smpl, -1, -1) # BxNjx3x3 
+            Rsmpl = ident.unsqueeze(0).unsqueeze(0).expand(B, self.num_joints_smpl, -1, -1).clone() # BxNjx3x3 
             
             Rskin = G_[:, :, :3, :3] # BxNjx3x3
-            Rsmpl[:, smpl_joint_corresp] = Rskin.clone()[:] # BxNjx3x3 pose params to rotation
+            Rsmpl[:, smpl_joint_corresp] = Rskin[:] # BxNjx3x3 pose params to rotation
             pose_feature = Rsmpl[:, 1:].view(B, -1, 3, 3) - ident
             pose_offsets = torch.matmul(pose_feature.view(B, -1),
                                         self.posedirs.view(Ns*3, -1).T).view(B, -1, 3)

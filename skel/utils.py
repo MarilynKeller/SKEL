@@ -440,7 +440,7 @@ def sparce_coo_matrix2tensor(arr_coo, make_dense=False):
     v = torch.FloatTensor(values)
     shape = arr_coo.shape
 
-    tensor_arr = torch.sparse.FloatTensor(i, v, torch.Size(shape))
+    tensor_arr = torch.sparse_coo_tensor(i, v, torch.Size(shape))
     
     if make_dense:
         tensor_arr = tensor_arr.to_dense()

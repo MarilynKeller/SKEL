@@ -13,7 +13,7 @@ if __name__ == '__main__':
     device = 'cpu'
     gender = 'female'
     
-    skel = SKEL(gender='female', custom_joint_reg_path='/home/mkeller2/data2/Code/mri-bones/joint_reg/data/v2/regressors/lin_regressor_v0.pkl').to(device)
+    skel = SKEL(gender='female').to(device)
 
     # Set parameters to default values (T pose)
     pose = torch.zeros(1, skel.num_q_params).to(device) # (1, 46)
