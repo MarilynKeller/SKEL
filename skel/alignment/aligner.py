@@ -73,6 +73,9 @@ class SkelFitter(object):
 
         self.nb_frames = poses_in.shape[0]
         self.watch_frame = watch_frame
+        if self.watch_frame >= self.nb_frames:
+            raise ValueError(f'watch_frame {self.watch_frame} is larger than the number of frames {self.nb_frames}. Please provide a watch frame index smaller than the number of frames ({self.nb_frames})')
+            
         self.is_skel_data_init = skel_data_init is not None
         self.force_recompute = force_recompute
         
@@ -151,7 +154,7 @@ class SkelFitter(object):
         if skel_data_init is None or self.force_recompute:
         
             poses_skel = torch.zeros((self.nb_frames, self.skel.num_q_params), device=self.device)
-            poses_skel[:, :3] = poses_smpl[:, :3] # Global orient are similar between SMPL and SKEL, so init with SMPL angles
+            # poses_skel[:, :3] = poses_smpl[:, :3] # Global orient are similar between SMPL and SKEL, so init with SMPL angles
             
             betas_skel = torch.zeros((self.nb_frames, 10), device=self.device)
             betas_skel[:] = betas_smpl[..., :10]

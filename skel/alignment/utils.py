@@ -98,6 +98,14 @@ def load_smpl_seq(smpl_seq_path, gender=None, straighten_hands=False):
     out_dict['betas'] = data_fixed['betas']
     out_dict['gender'] = data_fixed['gender']
     
+    # Check the shape of the parameters
+    num_batches = out_dict['poses'].shape[0]
+    assert out_dict['trans'].shape[0] == num_batches, f"Number of translations ({out_dict['trans'].shape[0]}) does not match the number of poses ({num_batches})"
+    assert out_dict['poses'].shape[1] == 72, f"Poses should have 72 parameters, found {out_dict['poses'].shape[1]} parameters"
+    assert out_dict['betas'].shape[1] == 10, f"Betas should have 10 parameters, found {out_dict['betas'].shape[1]} parameters"
+    assert out_dict['gender'] in ['male', 'female'], f"Gender should be either 'male' or 'female', found {out_dict['gender']}"
+    
+    import ipdb; ipdb.set_trace()
     return out_dict
         
         
