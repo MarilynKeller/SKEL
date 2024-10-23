@@ -60,8 +60,10 @@ def load_smpl_seq(smpl_seq_path, gender=None, straighten_hands=False):
         # assert 'global_orient' in data_dict and 'body_pose' in data_dict, f"Could not find poses in {smpl_seq_path}. Available keys: {data_dict.keys()})"
         poses = np.concatenate([data_dict['global_orient_axis_angle'], data_dict['body_pose_axis_angle']], axis=1)
         poses = poses.reshape(-1, 72)
-    elif 'body_pose' in data_dict and 'global_orient' in data_dict:
+    elif 'body_pose' in data_dict and 'global_orient' in data_dict and 'body_pose_axis_angle' in data_dict and 'global_orient_axis_angle' in data_dict:
         poses = np.concatenate([data_dict['global_orient_axis_angle'], data_dict['body_pose_axis_angle']], axis=-1)
+    elif 'body_pose' in data_dict and 'global_orient' in data_dict:
+        poses = np.concatenate([data_dict['global_orient'], data_dict['body_pose']], axis=-1)
     else: 
         raise Exception(f"Could not find poses in {smpl_seq_path}. Available keys: {data_dict.keys()})")
         
@@ -104,8 +106,7 @@ def load_smpl_seq(smpl_seq_path, gender=None, straighten_hands=False):
     assert out_dict['poses'].shape[1] == 72, f"Poses should have 72 parameters, found {out_dict['poses'].shape[1]} parameters"
     assert out_dict['betas'].shape[1] == 10, f"Betas should have 10 parameters, found {out_dict['betas'].shape[1]} parameters"
     assert out_dict['gender'] in ['male', 'female'], f"Gender should be either 'male' or 'female', found {out_dict['gender']}"
-    
-    import ipdb; ipdb.set_trace()
+
     return out_dict
         
         
