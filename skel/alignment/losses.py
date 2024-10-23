@@ -33,7 +33,9 @@ def compute_anchor_trans(trans, trans_init):
 
 def compute_time_loss(poses):
     
-    pose_delta = poses[1:] - poses[:-1]
+    with torch.no_grad():
+        pose_range = torch.max(poses, dim=0).values - torch.min(poses, dim=0).values
+    pose_delta = (poses[1:] - poses[:-1])/pose_range
     time_loss = torch.linalg.norm(pose_delta, ord=2)
     return time_loss
 

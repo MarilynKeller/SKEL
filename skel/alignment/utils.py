@@ -80,11 +80,14 @@ def load_smpl_seq(smpl_seq_path, gender=None, straighten_hands=False):
     data_fixed['poses'] = poses
         
     # Translation
-    if 'trans' not in data_dict:
-        data_fixed['trans'] = np.zeros((poses.shape[0], 3))
-    else:
+    if 'trans' in data_dict:
         data_fixed['trans'] = data_dict['trans']
-        
+    elif 'transl' in data_dict:
+        data_fixed['trans'] = data_dict['transl']
+    else:
+        raise Exception(f"Could not find trans in {smpl_seq_path}. Available keys: {data_dict.keys()})")
+        # data_fixed['trans'] = np.zeros((poses.shape[0], 3))
+
     # Get betas 
     betas = data_dict['betas'][..., :10] # Keep only the 10 first betas
     if len(betas.shape) == 1 and len(poses.shape) == 2:

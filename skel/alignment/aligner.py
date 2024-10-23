@@ -154,8 +154,9 @@ class SkelFitter(object):
         if skel_data_init is None or self.force_recompute:
         
             poses_skel = torch.zeros((self.nb_frames, self.skel.num_q_params), device=self.device)
-            # poses_skel[:, :3] = poses_smpl[:, :3] # Global orient are similar between SMPL and SKEL, so init with SMPL angles
-            
+            poses_skel[:, :3] = poses_smpl[:, :3] # Global orient are similar between SMPL and SKEL, so init with SMPL angles
+            poses_skel[:, 0] = -poses_smpl[:, 0]
+
             betas_skel = torch.zeros((self.nb_frames, 10), device=self.device)
             betas_skel[:] = betas_smpl[..., :10]
             
@@ -295,11 +296,11 @@ class SkelFitter(object):
             verts_mask = self.torso_verts_mask  
             
         elif cfg.mode=='fixed_upper_limbs':
-            upper_limbs_joints = [0,1,2,3,6,9,12,15,17]
+            upper_limbs_joints = [0,1,2,3,6,9,12,15,16,17]
             verts_mask = (self.smpl.lbs_weights[:,upper_limbs_joints]>0.5).sum(dim=-1)>0
             verts_mask = verts_mask.unsqueeze(0).unsqueeze(-1)
             
-            joint_mask[:, [3,4,5,8,9,10,18,23], :] = 0 # Do not try to match the joints of the upper limbs
+            joint_mask[:, [3,4,5,8,9,10,18,23], :] = 0 # Do not try to match the joints past the elbow and knees
             
             pose_mask[:] = 1           
             pose_mask[:,:3] = 0    # Block the global rotation
