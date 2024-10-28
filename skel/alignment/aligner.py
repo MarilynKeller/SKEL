@@ -188,7 +188,6 @@ class SkelFitter(object):
         assert body_params_in['betas_smpl'].shape[0] == 1, f"beta_smpl should be of shape 1xF where F is the number of frames, got {body_params_in['betas_smpl'].shape}"
         body_params = { key: val[i_start:i_end] for key, val in body_params_in.items() if key!='betas_smpl'} # Ignore the betas_smpl since it is the same for all frames
         body_params['betas_smpl'] = body_params_in['betas_smpl'].clone()
-        import ipdb; ipdb.set_trace()
 
         # SMPL params
         betas_smpl = body_params['betas_smpl']
