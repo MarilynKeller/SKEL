@@ -33,8 +33,7 @@ class SkelFitter(object):
         self.num_betas = num_betas
         
         # Instanciate masks used for the vertex to vertex fitting
-        fitting_mask_file = 'skel/alignment/riggid_parts_mask.pkl'
-        fitting_indices = pickle.load(open(fitting_mask_file, 'rb'))
+        fitting_indices = pickle.load(open(cg.fitting_mask_file, 'rb'))
         fitting_mask = torch.zeros(6890, dtype=torch.bool, device=self.device)
         fitting_mask[fitting_indices] = 1
         self.fitting_mask = fitting_mask.reshape(1, -1, 1).to(self.device) # 1xVx1 to be applied to verts that are BxVx3
@@ -155,7 +154,7 @@ class SkelFitter(object):
         
             poses_skel = torch.zeros((self.nb_frames, self.skel.num_q_params), device=self.device)
             poses_skel[:, :3] = poses_smpl[:, :3] # Global orient are similar between SMPL and SKEL, so init with SMPL angles
-            poses_skel[:, 0] = -poses_smpl[:, 0]
+            poses_skel[:, 0] = -poses_smpl[:, 0] # axis deffinition is different in SKEL
 
             betas_skel = torch.zeros((self.nb_frames, 10), device=self.device)
             betas_skel[:] = betas_smpl[..., :10]
@@ -182,11 +181,14 @@ class SkelFitter(object):
             
 
     
-    def _fit_batch(self, body_params, i, i_start, i_end):
+    def _fit_batch(self, body_params_in, i, i_start, i_end):
         """ Create parameters for the batch and run the optimization."""
         
-        # Sample a batch ver
-        body_params = { key: val[i_start:i_end] for key, val in body_params.items()}
+        # Sample a batch 
+        assert body_params_in['betas_smpl'].shape[0] == 1, f"beta_smpl should be of shape 1xF where F is the number of frames, got {body_params_in['betas_smpl'].shape}"
+        body_params = { key: val[i_start:i_end] for key, val in body_params_in.items() if key!='betas_smpl'} # Ignore the betas_smpl since it is the same for all frames
+        body_params['betas_smpl'] = body_params_in['betas_smpl'].clone()
+        import ipdb; ipdb.set_trace()
 
         # SMPL params
         betas_smpl = body_params['betas_smpl']
