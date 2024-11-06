@@ -264,7 +264,6 @@ class SKEL(nn.Module):
         Ns : skin vertices
         Nk : skeleton vertices    
         """
-        
         Ns = self.skin_template_v.shape[0] # nb skin vertices
         Nk = self.skel_template_v.shape[0] # nb skeleton vertices
         Nj = self.num_joints
@@ -284,6 +283,9 @@ class SKEL(nn.Module):
         # Check the device of the inputs
         assert betas.device == device, f"Betas should be on device {device}, but got {betas.device}"
         assert trans.device == device, f"Trans should be on device {device}, but got {trans.device}"  
+        
+        # Check if the betas vary or not. If they don't we can fasten the computation
+        is_unique_beta = (betas[1:] - betas[0:-1]).abs().sum() == 0
         
         skin_v0 = self.skin_template_v[None, :]
         skel_v0 = self.skel_template_v[None, :]
@@ -308,8 +310,13 @@ class SKEL(nn.Module):
 
         # ------- Shape ----------
         # Apply the beta offset to the template
-        shapedirs  = self.shapedirs.view(-1, self.num_betas)[None, :].expand(B, -1, -1) # B x D*Ns x num_betas
-        v_shaped = skin_v0 + torch.matmul(shapedirs, betas).view(B, Ns, 3)
+        shapedirs  = self.shapedirs.view(-1, self.num_betas)[None, :] # 1 x D*Ns x num_betas
+        
+        if is_unique_beta:
+            # Expand a unique shape instead of computing it for each frame
+            v_shaped = skin_v0 + torch.matmul(shapedirs, betas[0:1]).view(1, Ns, 3).expand(B, -1, -1)
+        else:
+            v_shaped = skin_v0 + torch.matmul(shapedirs.expand(B, -1, -1), betas).view(B, Ns, 3)
         
         # ------- Joints ----------
         # Regress the anatomical joint location
@@ -496,31 +503,35 @@ class SKEL(nn.Module):
             skel_rest_shape_h = torch.cat([skel_v0, torch.ones_like(skel_v0)[:, :, [0]]], dim=-1).expand(B, Nk, -1) # (1,Nk,3)
 
             # compute the bones scaling from the kinematic tree and skin mesh
-            #with torch.no_grad():
-            # TODO: when dJ is optimized the shape of the mesh should be affected by the gradients
-            bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0)
-            # Apply bone meshes scaling:
-            skel_v_shaped = torch.cat([(torch.matmul(bone_scale[:,:,0], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 0])[:, :, None], 
-                                    (torch.matmul(bone_scale[:,:,1], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 1])[:, :, None],
-                                    (torch.matmul(bone_scale[:,:,2], self.skel_weights_rigid.T) * skel_rest_shape_h[:, :, 2])[:, :, None],
-                                    (torch.ones(B, Nk, 1).to(device))
-                                    ], dim=-1) 
+            bone_scale = self.compute_bone_scale(J_, v_shaped, skin_v0, is_unique_beta)
+            # Generate scaling matrix
+            S = torch.diag_embed(torch.cat((bone_scale, torch.ones(B, Nj, 1).to(device)), dim=-1)) # BxJx4x4
             
-            # Align the bones with the proper axis
-            Gk01 = build_homog_matrix(Rk01, J.unsqueeze(-1)) # BxJx4x4
-            T = torch.matmul(self.skel_weights_rigid, Gk01.permute(1, 0, 2, 3).contiguous().view(Nj, -1)).view(Nk, B, 4,4).transpose(0, 1) #[1, 48757, 3, 3]
-            skel_v_align = torch.matmul(T, skel_v_shaped[:, :, :, None])[:, :, :, 0]
+            # Per bone transformation that translate the bon to its joint location and aligned it with the SMPL T pose limb axis
+            Gk01 = build_homog_matrix(Rk01, J.unsqueeze(-1)) # BxJx4x4 This transfo orient and translates the bones to SMPL Tpose
+            Gk01s = torch.einsum('bjmn,bjnp->bjmp', Gk01, S) # BxJx4x4 Same as previous line but scales the bone first
+           
+            # Compute and apply the bone per vertex transformation to T pose
+            if is_unique_beta:
+                T = torch.einsum('vj,bjlm->bvlm', self.skel_weights_rigid.to_dense(), Gk01s[0:1]) # (B, Nk, 4, 4)
+                skel_v_align = torch.matmul(T, skel_rest_shape_h[0:1].unsqueeze(-1)).squeeze(-1).expand(B, -1, -1) # (B, Nk)
+            else:
+                T = torch.einsum('vj,bjlm->bvlm', self.skel_weights_rigid.to_dense(), Gk01s)
+                skel_v_align = torch.matmul(T, skel_rest_shape_h.unsqueeze(-1)).squeeze(-1)
             
-            # This transfo will be applied with weights, effectively unposing the whole skeleton mesh in each joint frame. 
-            # Then, per joint weighted transformation can then be applied
+            # For each bone, G_tpose_to_unposed is the transformation that translate the bone in the joint frame. 
+            # This is necessary as the bone rotations have to be applied in the joint frame
             G_tpose_to_unposed = build_homog_matrix(torch.eye(3).view(1,1,3,3).expand(B, Nj, 3, 3).to(device), -J.unsqueeze(-1)) # BxJx4x4
-            G_skel = torch.matmul(G, G_tpose_to_unposed)            
+            G_skel = torch.matmul(G, G_tpose_to_unposed)  #  (B, 24, 4, 4) Transformations to appy to the bone from T pose to posed body 
             G_bones = torch.matmul(G, Gk01)
 
-            T = torch.matmul(self.skel_weights, G_skel.permute(1, 0, 2, 3).contiguous().view(Nj, -1)).view(Nk, B, 4,4).transpose(0, 1)
-            skel_v_posed = torch.matmul(T, skel_v_align[:, :, :, None])[:, :, :3, 0]
+            # Compute and apply the bone per vertex transformation to posed space
+            T = torch.einsum('vj,bjlm->bvlm', self.skel_weights.to_dense(), G_skel) # (B, Nk, 4, 4)
+            skel_v_posed = torch.matmul(T, skel_v_align.unsqueeze(-1))[:, :, :3, 0]
             
             skel_trans = skel_v_posed + trans[:,None,:]
+            
+            # skel_trans = skel_v_align[:, :, :3]
 
         else:
             skel_trans = skel_v0
@@ -534,6 +545,9 @@ class SKEL(nn.Module):
         
         if skin_verts.max() > 1e3:
             import ipdb; ipdb.set_trace()
+            
+        # Remove all the non necesarry stuff from the ram 
+        del T
         
         output = SKELOutput(skin_verts=skin_verts,
                             skel_verts=skel_verts,
@@ -549,7 +563,7 @@ class SKEL(nn.Module):
         return output
 
     
-    def compute_bone_scale(self, J_, v_shaped, skin_v0):
+    def compute_bone_scale(self, J_, v_shaped, skin_v0, is_unique_beta):
  
         # index                         [0,  1,     2,     3      4,     5,   , ...] # todo add last one, figure out bone scale indices
         # J_ bone vectors               [j0, j1-j0, j2-j0, j3-j0, j4-j1, j5-j2, ...]
@@ -565,7 +579,13 @@ class SKEL(nn.Module):
         osim_joints_r = self.apose_rel_transfo[:, :3, 3].view(1, Nj, 3).expand(B, Nj, 3).clone()
         
         length_bones_bsm = torch.norm(osim_joints_r, dim=-1).expand(B, -1)
+        # import ipdb; ipdb.set_trace()
+        # if is_unique_beta:
+        #     # Thiss avoids duplicating the data in memory for each frame when the length of the bones is the same for all frames anyway
+        #     length_bones_smpl = torch.norm(J_[0:1], dim=-1).expand(B, -1)
+        # else:
         length_bones_smpl = torch.norm(J_, dim=-1) # (B, Nj)
+        
         bone_scale_parent = length_bones_smpl / length_bones_bsm
         
         non_leaf_node = (self.child != 0)

@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('skel_file', type=str, help='Path to the SKEL sequence to visualize.')
     parser.add_argument('--smpl_seq', type=str, help='The corresponding SMPL sequence', default=None)
     parser.add_argument('--fps', type=int, help='Fps of the sequence', default=120)
+    parser.add_argument('--fps_out', type=int, help=' Fps at which the sequence will be played back', default=15)
     parser.add_argument('-z', '--z-up', help='Use Z-up coordinate system. \
         This is usefull for vizualizing sequences of AMASS that are 90 degree rotated', action='store_true')
     parser.add_argument('-g', '--gender', type=str, default=None, help='Forces the gender for visualization. By default, the code tries to load the gender from the skel file')
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     to_display = []
     
     fps_in = args.fps # Fps of the sequence
-    fps_out = 30 # Fps at which the sequence will be played back
+    fps_out = args.fps_out # Fps at which the sequence will be played back
     # The skeleton mesh has a lot of vertices, so we don't load all the frames to avoid memory issues
     if args.smpl_seq is not None:
         if args.offset:
