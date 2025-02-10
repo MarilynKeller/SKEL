@@ -8,7 +8,7 @@ This repository is part of the code release for the Siggraph Asia 2023 paper "Fr
 
 This repo contains the pytorch SKEL loader and the code to align it to SMPL sequences.
 
-SKEL is a parametric body shape and skeleton model. Its shape parameter θ lets you change the body shape and its pose parameter  qlets you pose the skeleton and skin in an anatomically plausible way. Given shape and pose parameters, SKEL returns joint locations, a body mesh, and a skeleton mesh. SKEL is differentiable and can be fit to various data like motion capture or SMPL sequences.
+SKEL is a parametric body shape and skeleton model. Its shape parameter **θ** lets you change the body shape and its pose parameter **q** lets you pose the skeleton and skin in an anatomically plausible way. Given shape and pose parameters, SKEL returns joint locations, a body mesh, and a skeleton mesh. SKEL is differentiable and can be fit to various data like motion capture or SMPL sequences.
 
 For more details, please check our Siggraph 2023 paper: [From Skin to Skeleton: Towards Biomechanically Accurate 3D Digital Humans](https://download.is.tue.mpg.de/skel/main_paper.pdf).
 
