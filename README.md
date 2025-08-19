@@ -36,6 +36,8 @@ For more details, please check our Siggraph 2023 paper: [From Skin to Skeleton: 
 - [Citation](#citation)
 - [License](#license)
 - [Contact](#contact)
+- [Other works using SKEL](#other-works-using-skel)
+
 
 ## Quickstart
 
@@ -270,3 +272,31 @@ This code and model are available for non-commercial scientific research purpose
 For any questions about SKEL loading, please contact skel@tuebingen.mpg.de.
 
 For commercial licensing, please contact ps-licensing@tue.mpg.de
+
+
+## Other works using SKEL
+
+
+<details open>
+<summary>List of repositories that uses SKEL.</summary>
+
+- [HSMR: Reconstructing Humans with a Biomechanically Accurate Skeleton](https://github.com/IsshikiHugh/HSMR): Recover SKEL parameters from single image.
+
+</details>
+
+
+<details open>
+<summary>List of publications building on SKEL.</summary>
+
+#### 2025
+
+- [HSMR: Reconstructing Humans with a Biomechanically Accurate Skeleton (CVPR 2025, Oral)](https://isshikihugh.github.io/HSMR/).  
+  Trains a transformer to regress **SKEL** parameters from a single image.
+
+- [Mitigating the Impact of Labeling Inaccuracies on 3D Human Body Reconstruction from Monocular Videos (Intelligent and Converged Networks, 2025)](https://link.springer.com/article/10.1007/s44196-025-00921-5).  
+  **SKEL**-based method that uses confidence to improve accuracy of pose and shape estimation from monocular videos.
+
+- [X2BR: High-Fidelity 3D Bone Reconstruction from a Planar X-Ray Image (arXiv 2025)](https://arxiv.org/abs/2504.08675).  
+  Constructs a patient-specific template mesh using **SKEL** to guide template-aligned reconstruction.
+
+</details>
