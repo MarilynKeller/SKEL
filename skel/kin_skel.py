@@ -77,27 +77,27 @@ pose_param_names = [
 
 pose_limits = {
 'scapula_abduction_r' :  [-0.628, 0.628],
-'scapula_elevation_r' :  [-0.4, -0.1],
-'scapula_upward_rot_r' : [-0.190, 0.319],
+'scapula_elevation_r' :  [-0.5, 0.6981],
+'scapula_upward_rot_r' : [-0.5236, 1.0472],
 
 'scapula_abduction_l' :  [-0.628, 0.628],
-'scapula_elevation_l' :  [-0.1, -0.4],
-'scapula_upward_rot_l' : [-0.210, 0.219],  
+'scapula_elevation_l' :  [-0.5, 0.6981],
+'scapula_upward_rot_l' : [-0.5236, 1.0472],  
 
 'elbow_flexion_r' : [0, (3/4)*math.pi],
 'pro_sup_r'       : [-3/4*math.pi/2, 3/4*math.pi/2],
 'wrist_flexion_r' : [-math.pi/2, math.pi/2],
-'wrist_deviation_r' :[-math.pi/4, math.pi/4],
+'wrist_deviation_r' :[-1, math.pi/4],
 
 'elbow_flexion_l' : [0, (3/4)*math.pi],
 'pro_sup_l'       : [-math.pi/2, math.pi/2],
 'wrist_flexion_l' : [-math.pi/2, math.pi/2],
-'wrist_deviation_l' :[-math.pi/4, math.pi/4],
+'wrist_deviation_l' :[-1, math.pi/4],
 
 'shoulder_r_y' : [-math.pi/2, math.pi/2], 
 
 'lumbar_bending' : [-2/3*math.pi/4, 2/3*math.pi/4],
-'lumbar_extension' : [-math.pi/4, math.pi/4],
+'lumbar_extension' : [-0.9, math.pi/4],
 'lumbar_twist' :  [-math.pi/4, math.pi/4],   
 
 'thorax_bending' :[-math.pi/4, math.pi/4], 
