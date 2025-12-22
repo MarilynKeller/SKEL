@@ -212,7 +212,7 @@ python examples/skel_sequence.py data/skel/sample_motion/01_01_poses_skel.pkl -z
 
 To visualize the SMPL sequence alongside : 
 ```shell
-python examples/skel_sequence.py /path/to/skel_models_v1.0/sample_motion/01_01_poses_skel.pkl -z --smpl_seq /path/to/skel_models_v1.0/sample_motion/01_01_poses.npz
+python examples/skel_sequence.py data/skel/sample_motion/01_01_poses_skel.pkl -z --smpl_seq data/skel/sample_motion/01_01_poses.npz --offset
 ```
 
 ## Aligning SKEL to a SMPL mesh

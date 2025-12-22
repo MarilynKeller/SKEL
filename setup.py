@@ -3,9 +3,10 @@ from setuptools import find_packages, setup
 requirements = ["wheel",
                 "torch>=1.6.0",
                 "smplx",
-                "trimesh",
+                "trimesh>=4.10.1",
                 "tqdm",
-                "moderngl-window==2.4.6"]
+                "moderngl-window==2.4.6",
+                "matplotlib"]
 
 setup(
     name="skel",
