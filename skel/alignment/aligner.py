@@ -11,7 +11,7 @@ See https://skel.is.tue.mpg.de/license.html for licensing and contact informatio
 import math
 import os
 import pickle
-from skel.alignment.losses import compute_anchor_pose, compute_anchor_trans, compute_pose_loss, compute_scapula_loss, compute_spine_loss, compute_time_loss, pretty_loss_print
+from skel.alignment.losses import compute_anchor_pose, compute_anchor_trans, compute_pose_loss, compute_scapula_loss, compute_spine_loss, compute_time_loss, compute_velocity_matching_loss, gaussian_kernel_1d, pretty_loss_print, smooth_time
 from skel.alignment.utils import location_to_spheres, to_numpy, to_params, to_torch
 import torch
 from tqdm import trange
@@ -247,8 +247,19 @@ class SkelFitter(object):
                                           line_search_fn=cfg.line_search_fn,  
                                           tolerance_change=cfg.tolerance_change)
                 
-            poses_init = poses.detach().clone()               
+            poses_init = poses.detach().clone()
             trans_init = trans.detach().clone()
+
+            # Precompute the smoothed target vertex velocity for the velocity matching
+            # loss. The target is constant across the LBFGS iterations of this stage, so
+            # we smooth it once here (see compute_velocity_matching_loss).
+            self.target_vel_smoothed = None
+            self.vel_kernel = None
+            if cfg.get('l_velocity_loss', 0.0) > 0 and verts.shape[0] > 1:
+                self.vel_kernel = gaussian_kernel_1d(cfg.get('velocity_smoothing_sigma', 2.0),
+                                                     verts.device, verts.dtype)
+                self.target_vel_smoothed = smooth_time((verts[1:] - verts[:-1]).detach(),
+                                                       self.vel_kernel)
 
             def closure():
                 optimizer.zero_grad()
@@ -384,7 +395,14 @@ class SkelFitter(object):
             # Adjust the losses of all the pose regularizations sub losses with the pose_reg_factor value
             for key in ['scapula_loss', 'spine_loss', 'pose_loss']:
                 loss_dict[key] = cfg.pose_reg_factor * loss_dict[key]
-                
+
+        # Velocity matching (optional, off by default): match the fitted vertices'
+        # frame-to-frame velocity to the target vertices' velocity. Unlike time_loss,
+        # which is a zero-velocity prior, this does not damp genuine motion.
+        if cfg.get('l_velocity_loss', 0.0) > 0 and getattr(self, 'target_vel_smoothed', None) is not None:
+            loss_dict['velocity_loss'] = cfg.l_velocity_loss * compute_velocity_matching_loss(
+                output.skin_verts, self.target_vel_smoothed, self.vel_kernel)
+
         return loss_dict
 
     def _fstep_plot(self, output, cfg, verts, anat_joints):

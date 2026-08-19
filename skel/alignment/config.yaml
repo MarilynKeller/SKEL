@@ -18,6 +18,13 @@ optim_steps:
     l_scapula_loss: 0.0
     l_spine_loss: 0.0
     l_pose_loss: 0.0
+    # Optional velocity matching term (0 = off, exact previous behavior). Matches the
+    # fitted vertices' frame-to-frame velocity to the target vertices' velocity instead
+    # of assuming zero velocity like l_time_loss. Both velocities are smoothed with the
+    # same temporal Gaussian (sigma in frames), see losses.compute_velocity_matching_loss.
+    # A weight of 300 works well for sequences where the source subject is moving.
+    l_velocity_loss: 0.0
+    velocity_smoothing_sigma: 2.0
   - description: Adjust the upper limbs pose
     lr: 0.1
     max_iter: 20
