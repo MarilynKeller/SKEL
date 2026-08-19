@@ -68,7 +68,18 @@ class SkelFitter(object):
             debug=False,
             watch_frame=0,
             freevert_mesh=None):
-        """Align SKEL to a SMPL sequence."""
+        """Align SKEL to a SMPL sequence.
+
+        batch_size: number of frames optimized jointly. Pass None to fit the whole
+        sequence as a single batch. Large batches (hundreds of frames) make much better
+        use of a modern GPU (small batches are kernel-launch bound) and avoid pose
+        discontinuities at the batch boundaries, where the next batch is only connected
+        to the previous one through its initialization. The whole sequence then shares
+        one LBFGS budget instead of one per batch, so if you lower num_steps/max_iter
+        in the config for speed, scale max_iter back up (~3x) when moving from
+        batch_size=20 to whole-sequence batches. The default config's budget is large
+        enough for either.
+        """
 
         self.nb_frames = poses_in.shape[0]
         self.watch_frame = watch_frame
@@ -84,7 +95,9 @@ class SkelFitter(object):
         # Initialize SKEL torch params
         body_params = self._init_params(betas_in, poses_in, trans_in, skel_data_init)
     
-        # We cut the whole sequence in batches for parallel optimization  
+        # We cut the whole sequence in batches for parallel optimization
+        if batch_size is None:
+            batch_size = self.nb_frames
         if batch_size > self.nb_frames:
             batch_size = self.nb_frames
             print('Batch size is larger than the number of frames. Setting batch size to {}'.format(batch_size))

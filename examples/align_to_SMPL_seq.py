@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out_dir', type=str, help='Output directory', default='output')
     parser.add_argument('-F', '--force-recompute', help='Force recomputation of the alignment', action='store_true')
     parser.add_argument('-D', '--debug', help='Only run the fit on the first minibach to test', action='store_true')
-    parser.add_argument('-B', '--batch_size', type=int, help='Batch size', default=3000)
+    parser.add_argument('-B', '--batch_size', type=int, help='Batch size (0 to fit the whole sequence as a single batch)', default=3000)
     parser.add_argument('-w', '--watch_frame', type=int, help='Frame of the batch to display', default=0)
     parser.add_argument('--gender', type=str, help='Gender of the subject (only needed if not provided with smpl_data_path)', default='female')
     parser.add_argument('-m', '--export_meshes', choices=[None, 'mesh', 'pickle'], default=None, 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     skel_seq = skel_fitter.run_fit(smpl_seq['trans'], 
                                smpl_seq['betas'], 
                                smpl_seq['poses'], 
-                               batch_size = args.batch_size,
+                               batch_size = args.batch_size if args.batch_size > 0 else None,
                                skel_data_init=skel_data_init, 
                                force_recompute=args.force_recompute,
                                debug=args.debug,

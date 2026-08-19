@@ -1,5 +1,13 @@
 # Optimization config file. In 'optim_steps' we define each optimization steps. 
 # Each step inherit and overwrite the parameters of the previous step."""
+#
+# Note on batch_size (run_fit) vs the iteration budget: large batches (hundreds of
+# frames, or batch_size=None for the whole sequence) are much faster per frame on
+# modern GPUs and avoid pose discontinuities at batch boundaries, but the whole
+# sequence then shares one LBFGS budget instead of one per batch. If you lower
+# num_steps/max_iter for speed, scale max_iter back up (~3x) when moving from
+# batch_size=20 to whole-sequence batches. When comparing batch sizes, never hold
+# the per-batch budget fixed — that systematically favors small batches.
 
 keepalive_meshviewer: false
 optim_steps:
