@@ -11,7 +11,7 @@ See https://skel.is.tue.mpg.de/license.html for licensing and contact informatio
 import math
 import os
 import pickle
-from skel.alignment.losses import compute_anchor_pose, compute_anchor_trans, compute_pose_loss, compute_scapula_loss, compute_spine_loss, compute_time_loss, pretty_loss_print
+from skel.alignment.losses import compute_anchor_pose, compute_anchor_trans, compute_pose_loss, compute_scapula_loss, compute_spine_loss, compute_time_loss, compute_velocity_matching_loss, gaussian_kernel_1d, pretty_loss_print, smooth_time
 from skel.alignment.utils import location_to_spheres, to_numpy, to_params, to_torch
 import torch
 from tqdm import trange
@@ -68,7 +68,18 @@ class SkelFitter(object):
             debug=False,
             watch_frame=0,
             freevert_mesh=None):
-        """Align SKEL to a SMPL sequence."""
+        """Align SKEL to a SMPL sequence.
+
+        batch_size: number of frames optimized jointly. Pass None to fit the whole
+        sequence as a single batch. Large batches (hundreds of frames) make much better
+        use of a modern GPU (small batches are kernel-launch bound) and avoid pose
+        discontinuities at the batch boundaries, where the next batch is only connected
+        to the previous one through its initialization. The whole sequence then shares
+        one LBFGS budget instead of one per batch, so if you lower num_steps/max_iter
+        in the config for speed, scale max_iter back up (~3x) when moving from
+        batch_size=20 to whole-sequence batches. The default config's budget is large
+        enough for either.
+        """
 
         self.nb_frames = poses_in.shape[0]
         self.watch_frame = watch_frame
@@ -84,7 +95,9 @@ class SkelFitter(object):
         # Initialize SKEL torch params
         body_params = self._init_params(betas_in, poses_in, trans_in, skel_data_init)
     
-        # We cut the whole sequence in batches for parallel optimization  
+        # We cut the whole sequence in batches for parallel optimization
+        if batch_size is None:
+            batch_size = self.nb_frames
         if batch_size > self.nb_frames:
             batch_size = self.nb_frames
             print('Batch size is larger than the number of frames. Setting batch size to {}'.format(batch_size))
@@ -247,8 +260,19 @@ class SkelFitter(object):
                                           line_search_fn=cfg.line_search_fn,  
                                           tolerance_change=cfg.tolerance_change)
                 
-            poses_init = poses.detach().clone()               
+            poses_init = poses.detach().clone()
             trans_init = trans.detach().clone()
+
+            # Precompute the smoothed target vertex velocity for the velocity matching
+            # loss. The target is constant across the LBFGS iterations of this stage, so
+            # we smooth it once here (see compute_velocity_matching_loss).
+            self.target_vel_smoothed = None
+            self.vel_kernel = None
+            if cfg.get('l_velocity_loss', 0.0) > 0 and verts.shape[0] > 1:
+                self.vel_kernel = gaussian_kernel_1d(cfg.get('velocity_smoothing_sigma', 2.0),
+                                                     verts.device, verts.dtype)
+                self.target_vel_smoothed = smooth_time((verts[1:] - verts[:-1]).detach(),
+                                                       self.vel_kernel)
 
             def closure():
                 optimizer.zero_grad()
@@ -384,7 +408,14 @@ class SkelFitter(object):
             # Adjust the losses of all the pose regularizations sub losses with the pose_reg_factor value
             for key in ['scapula_loss', 'spine_loss', 'pose_loss']:
                 loss_dict[key] = cfg.pose_reg_factor * loss_dict[key]
-                
+
+        # Velocity matching (optional, off by default): match the fitted vertices'
+        # frame-to-frame velocity to the target vertices' velocity. Unlike time_loss,
+        # which is a zero-velocity prior, this does not damp genuine motion.
+        if cfg.get('l_velocity_loss', 0.0) > 0 and getattr(self, 'target_vel_smoothed', None) is not None:
+            loss_dict['velocity_loss'] = cfg.l_velocity_loss * compute_velocity_matching_loss(
+                output.skin_verts, self.target_vel_smoothed, self.vel_kernel)
+
         return loss_dict
 
     def _fstep_plot(self, output, cfg, verts, anat_joints):
